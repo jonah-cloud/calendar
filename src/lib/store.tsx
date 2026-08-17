@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer } from "react";
 import type { AppState, Kid, Redemption, Reward, RoundResult, SubjectId } from "./types";
+import { migrateBuddy } from "./buddy";
 import { SUBJECTS } from "./content";
 import { addDays, todayISO, uid } from "./rand";
 import { isMastery } from "./engine";
@@ -65,6 +66,7 @@ function load(): AppState {
           kid.subjects[s.id] = { level: 1, placed: false, mastered: [], review: {}, history: [] };
         }
       }
+      kid.buddy = migrateBuddy(kid.buddy);
     }
     return parsed;
   } catch {

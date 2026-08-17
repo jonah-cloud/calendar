@@ -3,7 +3,7 @@ import type { View } from "../App";
 import BuddyAvatar, { type BuddyMood } from "../components/BuddyAvatar";
 import LessonFlow from "../components/LessonFlow";
 import { MASTERY_PCT, subjectById } from "../lib/content";
-import { interactiveForUnit } from "../lib/content/mathInteractive";
+import { interactiveFor } from "../lib/content/interactive";
 import { themeForUnit, type MissionTheme } from "../lib/content/mathLessons";
 import { coachFor, randomOops, randomPraise, randomZoom } from "../lib/coaches";
 import {
@@ -75,10 +75,12 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
 
   const theme: MissionTheme = useMemo(() => themeForUnit(round.key), [round.key]);
   const interactive = useMemo(
-    () => (isMathGame && mode === "learn" && round.unit ? interactiveForUnit(round.unit.id) : null),
-    [isMathGame, mode, round.unit]
+    () => (mode === "learn" && round.unit ? interactiveFor(subject, round.unit) : null),
+    [mode, round.unit, subject]
   );
   const lessonAlreadyDone = (kid.subjects[subject].lessons ?? []).includes(round.key);
+  /** read questions aloud automatically for pre-readers */
+  const autoRead = subject === "reading" && kid.subjects.reading.level <= 2;
 
   const [idx, setIdx] = useState(0);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -106,6 +108,18 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
     return () => clearInterval(t);
   }, []);
   useEffect(() => () => stopSpeaking(), []);
+
+  // auto-read the question for pre-readers
+  useEffect(() => {
+    if (autoRead && !finished && !showLesson && chosen === null) {
+      const current = easyOverrides[idx] ?? round.questions[idx];
+      if (current?.prompt) {
+        const t = setTimeout(() => speak(current.prompt, coach.voice), 600);
+        return () => clearTimeout(t);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, showLesson, finished]);
 
   // stall check-in: buddy gently pings if a question sits unanswered
   useEffect(() => {
@@ -252,6 +266,8 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
         unitLabel={round.unitLabel}
         steps={interactive}
         missionTitle={theme.title}
+        fluency={isMathGame}
+        autoRead={autoRead}
         onDone={() => {
           dispatch({ type: "LESSON_DONE", kidId: kid.id, subject, unitKey: round.key });
           setShowLesson(false);
@@ -464,7 +480,17 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
         {/* question card */}
         <div className="card p-6 mt-3 animate-pop" key={idx}>
           {q!.visual && <div className="visual-block text-center text-4xl mb-4">{q!.visual}</div>}
-          <div className="text-xl font-extrabold text-gray-800 text-center">{q!.prompt}</div>
+          <div className="flex items-center justify-center gap-2">
+            <div className="text-xl font-extrabold text-gray-800 text-center">{q!.prompt}</div>
+            <button
+              onClick={() => speak(q!.prompt, coach.voice)}
+              className="shrink-0 text-lg p-1.5 rounded-full active:scale-90"
+              style={{ background: def.soft }}
+              title="Read it to me!"
+            >
+              🔊
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
             {q!.choices.map((c, i) => {
               const isAnswer = i === q!.answer;

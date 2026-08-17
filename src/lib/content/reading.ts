@@ -7,6 +7,93 @@ function bUnit(id: string, title: string, emoji: string, bank: StaticQ[]): UnitD
 
 // ---------- Level 1: letters & sounds ----------
 
+/** Every letter with its anchor word — used by questions, hints, and lessons. */
+export const LETTER_WORDS: Record<string, [string, string]> = {
+  A: ["apple", "🍎"], B: ["ball", "⚽"], C: ["cat", "🐱"], D: ["dog", "🐶"],
+  E: ["egg", "🥚"], F: ["fish", "🐟"], G: ["goat", "🐐"], H: ["hat", "🎩"],
+  I: ["ice", "🧊"], J: ["jam", "🍓"], K: ["kite", "🪁"], L: ["lion", "🦁"],
+  M: ["moon", "🌙"], N: ["nest", "🪺"], O: ["octopus", "🐙"], P: ["pig", "🐷"],
+  Q: ["queen", "👑"], R: ["rainbow", "🌈"], S: ["sun", "☀️"], T: ["turtle", "🐢"],
+  U: ["umbrella", "☂️"], V: ["violin", "🎻"], W: ["whale", "🐳"], X: ["fox (hear the X!)", "🦊"],
+  Y: ["yo-yo", "🪀"], Z: ["zebra", "🦓"],
+};
+
+/** Letters that look alike — the distractors that actually teach. */
+const CONFUSIONS: string[][] = [
+  ["B", "D", "P", "R"],
+  ["M", "N", "W", "V"],
+  ["C", "G", "O", "Q"],
+  ["E", "F", "T", "L"],
+  ["I", "J", "L", "T"],
+  ["A", "V", "X", "Y"],
+  ["S", "Z", "C", "E"],
+  ["U", "V", "W", "N"],
+  ["K", "X", "H", "R"],
+];
+
+const LOWER_CONFUSIONS: string[][] = [
+  ["b", "d", "p", "q"],
+  ["m", "n", "u", "w"],
+  ["i", "j", "l", "t"],
+  ["a", "o", "e", "c"],
+  ["f", "t", "k", "h"],
+  ["v", "w", "x", "y"],
+];
+
+function letterQ(): Question {
+  const kind = Math.random();
+  if (kind < 0.4) {
+    // find the named letter among look-alikes
+    const set = pick(CONFUSIONS);
+    const target = pick(set);
+    const [word, emoji] = LETTER_WORDS[target];
+    const choices = shuffle([...set]);
+    return {
+      prompt: `Tap the letter ${target}!`,
+      visual: emoji,
+      choices,
+      answer: choices.indexOf(target),
+      steps: [
+        `${target} is for ${word} ${emoji}!`,
+        `Say it out loud with me: ${target}, ${target}, ${target}!`,
+        `Now trace it in the air with your wing — I mean, finger!`,
+      ],
+    };
+  }
+  if (kind < 0.75) {
+    // match uppercase to its lowercase
+    const set = pick(LOWER_CONFUSIONS);
+    const target = pick(set);
+    const upper = target.toUpperCase();
+    const choices = shuffle([...set]);
+    return {
+      prompt: `Which is the little (lowercase) ${upper}?`,
+      visual: upper,
+      choices,
+      answer: choices.indexOf(target),
+      steps: [
+        `Big ${upper} and little ${target} are the same letter in different sizes — like a mama and baby!`,
+        `Little ${target} still says the same sound as big ${upper}.`,
+      ],
+    };
+  }
+  // alphabet order
+  const abc = "ABCDEFGHIJKLMNOPQRSTUVWXY";
+  const i = Math.floor(Math.random() * (abc.length - 1));
+  const target = abc[i + 1];
+  const wrongPool = abc.split("").filter((l) => l !== target && Math.abs(abc.indexOf(l) - i) <= 4);
+  const choices = shuffle([target, ...shuffle(wrongPool).slice(0, 3)]);
+  return {
+    prompt: `Sing the alphabet song! What letter comes right after ${abc[i]}?`,
+    choices,
+    answer: choices.indexOf(target),
+    steps: [
+      `Sing it: ${abc.slice(Math.max(0, i - 2), i + 2).split("").join("… ")}…`,
+      `The next letter is ${target}! ${target} is for ${LETTER_WORDS[target][0]} ${LETTER_WORDS[target][1]}.`,
+    ],
+  };
+}
+
 const LETTER_SOUNDS: [string, string[]][] = [
   // [target word, words with same starting sound] — distractors from other rows
   ["ball 🏀", ["bear", "banana", "boat"]],
@@ -239,9 +326,9 @@ export const READING_LEVELS: LevelDef[] = [
     n: 1,
     name: "Letter Detectives",
     units: [
+      { id: "letters", title: "Know Your Letters", emoji: "🅰️", gen: () => letterQ() },
       { id: "sounds", title: "Starting Sounds", emoji: "🔤", gen: () => startSoundQ() },
       { id: "rhymes", title: "Rhyme Time", emoji: "🎶", gen: () => rhymeQ() },
-      { id: "case", title: "Big & Small Letters", emoji: "🅰️", gen: () => caseQ() },
       bUnit("cvc", "Sound-It-Out Words", "🐱", CVC),
     ],
   },

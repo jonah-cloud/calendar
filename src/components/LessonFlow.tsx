@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Coach } from "../lib/coaches";
 import type { IStep } from "../lib/content/mathInteractive";
-import { pick as randPick } from "../lib/rand";
+import { pick as randPick, staticQ } from "../lib/rand";
 import { isMuted, setMuted, speak, speakLines, stopSpeaking } from "../lib/speech";
 import type { Question, SubjectDef, UnitDef } from "../lib/types";
 
@@ -12,6 +12,10 @@ interface Props {
   unitLabel: string;
   steps: IStep[];
   missionTitle: string;
+  /** true = math speed mission follows; false = normal practice round */
+  fluency: boolean;
+  /** auto-read questions aloud (pre-readers) */
+  autoRead?: boolean;
   onDone: () => void;
   onExit: () => void;
 }
@@ -22,7 +26,7 @@ const TAP_CHEERS = ["Nice!", "Yes!", "Keep going!", "That's it!", "Beautiful!"];
  * The 3-stage concept lesson: Explore (tap manipulatives) → Understand
  * (untimed guided questions) → hands off to the speed mission.
  */
-export default function LessonFlow({ def, coach, unit, unitLabel, steps, missionTitle, onDone, onExit }: Props) {
+export default function LessonFlow({ def, coach, unit, unitLabel, steps, missionTitle, fluency, autoRead, onDone, onExit }: Props) {
   const [stage, setStage] = useState<"explore" | "understand" | "ready">("explore");
   const [stepIdx, setStepIdx] = useState(0);
   const [muted, setMutedState] = useState(isMuted());
@@ -84,10 +88,10 @@ export default function LessonFlow({ def, coach, unit, unitLabel, steps, mission
           <ExploreStep key={stepIdx} step={step} coach={coach} def={def} onDone={advance} />
         )}
         {stage === "understand" && (
-          <Understand def={def} coach={coach} unit={unit} onDone={() => setStage("ready")} />
+          <Understand def={def} coach={coach} unit={unit} autoRead={autoRead} onDone={() => setStage("ready")} />
         )}
         {stage === "ready" && (
-          <ReadyCard def={def} coach={coach} missionTitle={missionTitle} onDone={onDone} />
+          <ReadyCard def={def} coach={coach} missionTitle={missionTitle} fluency={fluency} onDone={onDone} />
         )}
       </div>
     </div>
@@ -135,7 +139,54 @@ function ExploreStep({ step, coach, def, onDone }: { step: IStep; coach: Coach; 
       return <ShadeStep step={step} coach={coach} def={def} onDone={onDone} />;
     case "pick":
       return <PickStep step={step} coach={coach} def={def} onDone={onDone} />;
+    case "cards":
+      return <CardsStep step={step} coach={coach} def={def} onDone={onDone} />;
   }
+}
+
+function CardsStep({ step, coach, def, onDone }: { step: Extract<IStep, { kind: "cards" }>; coach: Coach; def: SubjectDef; onDone: () => void }) {
+  const [flipped, setFlipped] = useState<Set<number>>(new Set());
+  const allFlipped = flipped.size >= step.cards.length;
+  const tap = (i: number) => {
+    const card = step.cards[i];
+    speak(card.say ?? card.front, coach.voice, card.lang ? { lang: card.lang } : undefined);
+    if (!flipped.has(i)) {
+      const next = new Set(flipped);
+      next.add(i);
+      setFlipped(next);
+    }
+  };
+  return (
+    <div className="mt-6 animate-pop">
+      <CoachBubble coach={coach} def={def} text={step.text} />
+      <div className={`grid gap-3 mt-4 ${step.cards.length > 4 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+        {step.cards.map((c, i) => {
+          const isFlipped = flipped.has(i);
+          return (
+            <button
+              key={i}
+              onClick={() => tap(i)}
+              className="card p-4 min-h-[110px] flex flex-col items-center justify-center text-center active:scale-95 transition-all"
+              style={{ border: isFlipped ? `3px solid ${def.color}` : "3px solid transparent" }}
+            >
+              <div className="font-extrabold text-lg text-gray-800 leading-snug">{c.front}</div>
+              {isFlipped ? (
+                <div className="mt-2 text-sm font-bold animate-pop" style={{ color: def.color }}>
+                  {c.back}
+                </div>
+              ) : (
+                <div className="mt-2 text-xs font-bold text-gray-300">tap to hear! 🔊</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="text-center text-xs font-bold text-gray-400 mt-3">
+        {flipped.size}/{step.cards.length} cards studied
+      </div>
+      {allFlipped && <DoneBanner def={def} onDone={onDone} label="I know them! ➡️" />}
+    </div>
+  );
 }
 
 function DoneBanner({ def, onDone, label }: { def: SubjectDef; onDone: () => void; label?: string }) {
@@ -384,8 +435,12 @@ function PickStep({ step, coach, def, onDone }: { step: Extract<IStep, { kind: "
 
 const NEEDED = 3;
 
-function Understand({ def, coach, unit, onDone }: { def: SubjectDef; coach: Coach; unit: UnitDef; onDone: () => void }) {
-  const makeQ = (): Question => (unit.gen ? unit.gen(0.4) : { prompt: "", choices: [""], answer: 0 });
+function Understand({ def, coach, unit, autoRead, onDone }: { def: SubjectDef; coach: Coach; unit: UnitDef; autoRead?: boolean; onDone: () => void }) {
+  const makeQ = (): Question => {
+    if (unit.gen) return unit.gen(0.4);
+    if (unit.bank?.length) return staticQ(unit.bank[Math.floor(Math.random() * unit.bank.length)]);
+    return { prompt: "", choices: [""], answer: 0 };
+  };
   const [q, setQ] = useState<Question>(makeQ);
   const [gotCount, setGotCount] = useState(0);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -402,6 +457,15 @@ function Understand({ def, coach, unit, onDone }: { def: SubjectDef; coach: Coac
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // read the question aloud for pre-readers
+  useEffect(() => {
+    if (autoRead && q.prompt) {
+      const t = setTimeout(() => speak(q.prompt, coach.voice), 700);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   const right = chosen !== null && chosen === q.answer;
   const wrong = chosen !== null && chosen !== q.answer;
@@ -446,7 +510,17 @@ function Understand({ def, coach, unit, onDone }: { def: SubjectDef; coach: Coac
       </div>
       <div className="card p-6 mt-3">
         {q.visual && <div className="visual-block text-center text-4xl mb-4">{q.visual}</div>}
-        <div className="text-xl font-extrabold text-gray-800 text-center">{q.prompt}</div>
+        <div className="flex items-center justify-center gap-2">
+          <div className="text-xl font-extrabold text-gray-800 text-center">{q.prompt}</div>
+          <button
+            onClick={() => speak(q.prompt, coach.voice)}
+            className="shrink-0 text-lg p-1.5 rounded-full active:scale-90"
+            style={{ background: def.soft }}
+            title="Read it to me!"
+          >
+            🔊
+          </button>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
           {q.choices.map((c, i) => {
             let cls = "bg-gray-50 border-2 border-gray-200 text-gray-800";
@@ -507,10 +581,12 @@ function Understand({ def, coach, unit, onDone }: { def: SubjectDef; coach: Coac
 
 /* ---------------- ready handoff ---------------- */
 
-function ReadyCard({ def, coach, missionTitle, onDone }: { def: SubjectDef; coach: Coach; missionTitle: string; onDone: () => void }) {
+function ReadyCard({ def, coach, missionTitle, fluency, onDone }: { def: SubjectDef; coach: Coach; missionTitle: string; fluency: boolean; onDone: () => void }) {
   useEffect(() => {
     speak(
-      `You LEARNED it. You UNDERSTAND it. Now we make it automatic — fast answers, no counting on fingers! Ready for the ${missionTitle}? Three, two, one…`,
+      fluency
+        ? `You LEARNED it. You UNDERSTAND it. Now we make it automatic — fast answers, no counting on fingers! Ready for the ${missionTitle}? Three, two, one…`
+        : `You learned it AND you understand it. Now show me what you've got — a real round, and I'll be right here cheering. Ready? Let's go!`,
       coach.voice
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -518,13 +594,18 @@ function ReadyCard({ def, coach, missionTitle, onDone }: { def: SubjectDef; coac
   return (
     <div className="card p-8 mt-6 text-center animate-pop">
       <div className="text-6xl animate-wiggle">{coach.emoji}</div>
-      <div className="font-extrabold text-2xl text-gray-800 mt-3">Stage 3: FLUENCY! ⚡</div>
+      <div className="font-extrabold text-2xl text-gray-800 mt-3">
+        {fluency ? "Stage 3: FLUENCY! ⚡" : "Stage 3: SHOW WHAT YOU KNOW! 🌟"}
+      </div>
       <p className="text-gray-600 font-semibold mt-2">
-        You learned it. You understand it. Now we make it <b>automatic</b> — that's when math facts
-        pop into your head faster than I chase snack trucks!
+        {fluency ? (
+          <>You learned it. You understand it. Now we make it <b>automatic</b> — that's when math facts pop into your head faster than I chase snack trucks!</>
+        ) : (
+          <>You learned it. You understand it. Now let's make it <b>stick</b> — a real round, with {coach.name} cheering you on!</>
+        )}
       </p>
       <button onClick={onDone} className="btn-big w-full mt-6 text-white text-xl" style={{ background: def.color }}>
-        Start the {missionTitle}! 🏁
+        {fluency ? `Start the ${missionTitle}! 🏁` : "Start the round! 🌟"}
       </button>
     </div>
   );

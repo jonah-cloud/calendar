@@ -9,6 +9,7 @@
  *  - hop:   number-line skip counting — tap the next landing number
  *  - shade: tap tiles to shade a fraction of a whole
  *  - pick:  big tappable answer tiles with a spoken hint on mistakes
+ *  - cards: flip cards — tap to hear it spoken, flip to see the meaning
  */
 
 export type IStep =
@@ -29,7 +30,12 @@ export type IStep =
     }
   | { kind: "hop"; text: string; start: number; step: number; hops: number }
   | { kind: "shade"; text: string; n: number; shade: number; label: string; pre?: number }
-  | { kind: "pick"; text: string; visual?: string; tiles: string[]; correct: number; hint: string };
+  | { kind: "pick"; text: string; visual?: string; tiles: string[]; correct: number; hint: string }
+  | {
+      kind: "cards";
+      text: string;
+      cards: { front: string; back: string; say?: string; lang?: string }[];
+    };
 
 export const MATH_INTERACTIVE: Record<string, IStep[]> = {
   counting: [

@@ -252,6 +252,27 @@ const SENTENCES: StaticQ[] = [
   { p: `"Quiero helado, por favor." What do I want?`, a: "ice cream", w: ["water", "bread", "cheese"] },
 ];
 
+/** Vocab sets by unit id — used to auto-build Lola's listen-first card lessons. */
+export const SPANISH_VOCAB: Record<string, [string, string][]> = {
+  greetings: GREETINGS,
+  colors: COLORS,
+  numbers1: NUMBERS1,
+  animals: ANIMALS,
+  family: FAMILY,
+  food: FOOD,
+  body: BODY,
+  numbers2: NUMBERS2,
+  clothes: CLOTHES,
+  house: HOUSE,
+  days: DAYS,
+  verbs: VERBS,
+  weather: WEATHER,
+  feelings: FEELINGS,
+  qwords: QUESTION_WORDS,
+  verbs2: VERBS,
+  mixreview: [...COLORS.slice(0, 4), ...FAMILY.slice(0, 4), ...FOOD.slice(0, 4), ...WEATHER.slice(0, 4)],
+};
+
 export const SPANISH_LEVELS: LevelDef[] = [
   {
     n: 1,

@@ -74,18 +74,26 @@ export interface SubjectProgress {
   lessons?: string[];
 }
 
-/** The kid-built buddy character — their personal animated guide. */
+/** The kid-built buddy character — their personal animated guide.
+ * Every body area is a variant index into that part's 20-option gallery. */
 export interface BuddyConfig {
   name: string;
   /** body color hex */
   color: string;
   /** belly/accent color hex */
   accent: string;
-  ears: "round" | "pointy" | "floppy" | "antenna";
-  eyes: "happy" | "big" | "star" | "sleepy";
-  accessory: "none" | "bow" | "glasses" | "crown" | "flower" | "cap";
-  /** voice character */
-  pitch: number;
+  head: number;
+  body: number;
+  arms: number;
+  legs: number;
+  feet: number;
+  ears: number;
+  hair: number;
+  eyes: number;
+  /** multi-select accessory ids */
+  accessories: string[];
+  /** named voice preset id */
+  voice: string;
 }
 
 export interface DayLog {

@@ -121,14 +121,62 @@ export function trackAnswer(t: StruggleTracker, right: boolean, ms: number, canI
 
 export const checkinLine = () => pick(CHECKIN);
 
-export const buddyVoice = (b: BuddyConfig): VoiceStyle => ({ pitch: b.pitch, rate: 1.05 });
+/** The 8 named buddy voices. */
+export interface VoicePreset {
+  id: string;
+  label: string;
+  emoji: string;
+  blurb: string;
+  style: VoiceStyle;
+}
+
+export const VOICE_PRESETS: VoicePreset[] = [
+  { id: "bubbles", label: "Bubbles", emoji: "🫧", blurb: "squeaky & silly", style: { pitch: 1.7, rate: 1.1 } },
+  { id: "sunny", label: "Sunny", emoji: "🌞", blurb: "bright & cheery", style: { pitch: 1.35, rate: 1.05 } },
+  { id: "zippy", label: "Zippy", emoji: "⚡", blurb: "super speedy", style: { pitch: 1.5, rate: 1.3 } },
+  { id: "breeze", label: "Breeze", emoji: "🍃", blurb: "calm & gentle", style: { pitch: 1.15, rate: 0.95 } },
+  { id: "coco", label: "Coco", emoji: "🍫", blurb: "warm & friendly", style: { pitch: 1.0, rate: 1.0 } },
+  { id: "dreamy", label: "Dreamy", emoji: "🌙", blurb: "slow & cozy", style: { pitch: 1.05, rate: 0.8 } },
+  { id: "robo", label: "Robo", emoji: "🤖", blurb: "beep boop", style: { pitch: 0.8, rate: 1.18 } },
+  { id: "rumble", label: "Rumble", emoji: "🐻", blurb: "big & deep", style: { pitch: 0.7, rate: 0.88 } },
+];
+
+export const buddyVoice = (b: BuddyConfig): VoiceStyle =>
+  (VOICE_PRESETS.find((v) => v.id === b.voice) ?? VOICE_PRESETS[1]).style;
 
 export const DEFAULT_BUDDY: BuddyConfig = {
   name: "Sunny",
   color: "#8b5cf6",
   accent: "#fde68a",
-  ears: "round",
-  eyes: "happy",
-  accessory: "bow",
-  pitch: 1.3,
+  head: 0,
+  body: 0,
+  arms: 0,
+  legs: 0,
+  feet: 0,
+  ears: 1,
+  hair: 0,
+  eyes: 0,
+  accessories: ["bow"],
+  voice: "sunny",
 };
+
+/** Upgrade a buddy saved by an older version of the app (slider voice, single accessory). */
+export function migrateBuddy(raw: unknown): BuddyConfig | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const b = raw as Record<string, unknown>;
+  if (typeof b.head === "number" && Array.isArray(b.accessories)) return raw as BuddyConfig;
+  if (typeof b.pitch !== "number") return undefined;
+  const pitch = b.pitch as number;
+  const earsMap: Record<string, number> = { round: 1, pointy: 3, floppy: 5, antenna: 6 };
+  const eyesMap: Record<string, number> = { happy: 0, big: 1, star: 2, sleepy: 3 };
+  return {
+    ...DEFAULT_BUDDY,
+    name: typeof b.name === "string" ? b.name : "Buddy",
+    color: typeof b.color === "string" ? b.color : DEFAULT_BUDDY.color,
+    accent: typeof b.accent === "string" ? b.accent : DEFAULT_BUDDY.accent,
+    ears: earsMap[b.ears as string] ?? 1,
+    eyes: eyesMap[b.eyes as string] ?? 0,
+    accessories: b.accessory && b.accessory !== "none" ? [b.accessory as string] : [],
+    voice: pitch >= 1.45 ? "bubbles" : pitch >= 1.2 ? "sunny" : pitch >= 0.95 ? "coco" : "rumble",
+  };
+}
