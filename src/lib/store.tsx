@@ -82,6 +82,8 @@ export type Action =
   | { type: "ADD_REWARD"; reward: Reward }
   | { type: "REMOVE_REWARD"; rewardId: string }
   | { type: "SET_PLACED"; kidId: string; subject: SubjectId; level: number }
+  | { type: "LESSON_DONE"; kidId: string; subject: SubjectId; unitKey: string }
+  | { type: "SET_BUDDY"; kidId: string; buddy: NonNullable<Kid["buddy"]> }
   | {
       type: "ROUND_DONE";
       kidId: string;
@@ -150,6 +152,21 @@ function reducer(state: AppState, action: Action): AppState {
           [action.subject]: { ...k.subjects[action.subject], placed: true, level: action.level },
         },
       }));
+    case "LESSON_DONE":
+      return updateKid(state, action.kidId, (k) => {
+        const prog = k.subjects[action.subject];
+        const lessons = prog.lessons ?? [];
+        if (lessons.includes(action.unitKey)) return k;
+        return {
+          ...k,
+          subjects: {
+            ...k.subjects,
+            [action.subject]: { ...prog, lessons: [...lessons, action.unitKey] },
+          },
+        };
+      });
+    case "SET_BUDDY":
+      return updateKid(state, action.kidId, (k) => ({ ...k, buddy: action.buddy }));
     case "ROUND_DONE": {
       return updateKid(state, action.kidId, (kid) => {
         const prog = kid.subjects[action.subject];

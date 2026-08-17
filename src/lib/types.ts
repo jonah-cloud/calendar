@@ -70,6 +70,22 @@ export interface SubjectProgress {
   /** spaced repetition: unitKey -> { due: ISO date, interval: days } */
   review: Record<string, { due: string; interval: number }>;
   history: RoundResult[];
+  /** unit keys whose interactive concept lesson has been completed */
+  lessons?: string[];
+}
+
+/** The kid-built buddy character — their personal animated guide. */
+export interface BuddyConfig {
+  name: string;
+  /** body color hex */
+  color: string;
+  /** belly/accent color hex */
+  accent: string;
+  ears: "round" | "pointy" | "floppy" | "antenna";
+  eyes: "happy" | "big" | "star" | "sleepy";
+  accessory: "none" | "bow" | "glasses" | "crown" | "flower" | "cap";
+  /** voice character */
+  pitch: number;
 }
 
 export interface DayLog {
@@ -106,6 +122,7 @@ export interface Kid {
   emoji: string;
   color: string; // hex
   born?: number; // birth year, used for initial level guess
+  buddy?: BuddyConfig;
   bucks: number;
   ledger: LedgerEntry[];
   streak: { count: number; last: string };

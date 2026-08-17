@@ -9,6 +9,7 @@ import MasteryMap from "./screens/MasteryMap";
 import RewardsStore from "./screens/RewardsStore";
 import WorkshopsScreen from "./screens/WorkshopsScreen";
 import GuideDashboard from "./screens/GuideDashboard";
+import BuddyBuilder from "./screens/BuddyBuilder";
 
 export type View =
   | { name: "picker" }
@@ -17,6 +18,7 @@ export type View =
   | { name: "map"; kidId: string; subject: SubjectId }
   | { name: "store"; kidId: string }
   | { name: "workshops"; kidId: string }
+  | { name: "buddy"; kidId: string }
   | { name: "guide" };
 
 export default function App() {
@@ -45,6 +47,8 @@ export default function App() {
       return <RewardsStore kid={kid!} go={setView} />;
     case "workshops":
       return <WorkshopsScreen kid={kid!} go={setView} />;
+    case "buddy":
+      return <BuddyBuilder kid={kid!} go={setView} />;
     case "guide":
       return <GuideDashboard go={setView} />;
   }

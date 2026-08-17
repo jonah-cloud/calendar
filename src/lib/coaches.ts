@@ -5,6 +5,8 @@ export interface Coach {
   name: string;
   emoji: string;
   title: string;
+  /** Voice character for the speech engine. */
+  voice: { pitch: number; rate: number };
   /** Funny lines that open a wrong-answer walkthrough. */
   oops: string[];
   /** Praise for correct answers. */
@@ -20,6 +22,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Dash",
     emoji: "🐆",
     title: "Dash the Cheetah · Math Mission Chief",
+    voice: { pitch: 1.35, rate: 1.12 },
     oops: [
       "WHOA, speed bump! Even cheetahs trip on their shoelaces. (I don't wear shoes. Long story.) Watch this:",
       "Eek — wrong turn! Happens to me when I'm thinking about snacks. Let me show you the fast lane:",
@@ -42,6 +45,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Olive",
     emoji: "🦉",
     title: "Olive the Owl · Head Book-Whooo-rarian",
+    voice: { pitch: 0.85, rate: 0.9 },
     oops: [
       "Whooo, not quite! Don't worry — I once read a whole book upside down. Here's the secret:",
       "Hmm-hoo! My feathers are ruffled — that word is a tricky one. Let me shine my book-light on it:",
@@ -57,6 +61,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Lola",
     emoji: "🦜",
     title: "Lola the Parrot · Directora of Dramatic Spanish",
+    voice: { pitch: 1.45, rate: 1.0 },
     oops: [
       "¡Ay, no no no! *dramatic feather flip* — it's okay mi amor, even I once said 'gato' to a dog. Listen:",
       "¡Uy! Wrong word, right heart. Lola will fix it. Repeat after me, TWICE, because I always say it twice:",
@@ -72,6 +77,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Meowzart",
     emoji: "🐱",
     title: "Meowzart · World-Famous Composer Cat",
+    voice: { pitch: 1.15, rate: 0.92 },
     oops: [
       "Meow-NO! *dramatic piano slam* …forgive me, I am an ARTIST. Now, listen closely, my student:",
       "Hisss — that note was flat! Even my ninth symphony had a wrong meow in it. Observe:",
@@ -87,6 +93,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Newton",
     emoji: "🦝",
     title: "Newton the Raccoon · Chief of Messy Experiments",
+    voice: { pitch: 1.0, rate: 1.08 },
     oops: [
       "KABOOM — wrong beaker! No worries, 90% of my experiments explode too. Here's what ACTUALLY happens:",
       "Hmm, my trash-panda senses say nope! Let's dig through the facts together (I love digging):",

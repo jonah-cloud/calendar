@@ -1,10 +1,21 @@
+import { useEffect, useRef } from "react";
 import type { View } from "../App";
+import BuddyAvatar from "../components/BuddyAvatar";
+import { buddyVoice } from "../lib/buddy";
 import { coachFor } from "../lib/coaches";
 import { SUBJECTS, subjectById } from "../lib/content";
 import { dueReviews, nextUnit, todaysPlan, totalDueReviews } from "../lib/engine";
-import { todayISO } from "../lib/rand";
+import { pick, todayISO } from "../lib/rand";
+import { speak } from "../lib/speech";
 import { useStore } from "../lib/store";
 import type { Kid } from "../lib/types";
+
+const GREETINGS = [
+  (n: string) => `Hi ${n}! I missed you! Ready to close some rings?`,
+  (n: string) => `${n}! My favorite human! Let's learn something amazing today!`,
+  (n: string) => `There she is! Okay ${n}, which mission are we crushing first?`,
+  (n: string) => `Good to see you, ${n}! Your brain is looking extra strong today!`,
+];
 
 function Ring({ filled, color }: { filled: boolean; color: string }) {
   return (
@@ -30,6 +41,16 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
   const reviewsDue = totalDueReviews(kid);
   const allDone = day.blocks >= target;
 
+  // buddy greets her by name (once per visit)
+  const greeted = useRef(false);
+  useEffect(() => {
+    if (kid.buddy && !greeted.current) {
+      greeted.current = true;
+      speak(pick(GREETINGS)(kid.name), buddyVoice(kid.buddy));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       className="min-h-screen p-5 pb-16"
@@ -41,12 +62,18 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
           ⬅️
         </button>
         <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-            style={{ background: kid.color + "22", border: `3px solid ${kid.color}` }}
-          >
-            {kid.emoji}
-          </div>
+          {kid.buddy ? (
+            <button onClick={() => go({ name: "buddy", kidId: kid.id })} title="Edit your buddy">
+              <BuddyAvatar buddy={kid.buddy} size={58} mood="idle" />
+            </button>
+          ) : (
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+              style={{ background: kid.color + "22", border: `3px solid ${kid.color}` }}
+            >
+              {kid.emoji}
+            </div>
+          )}
           <div>
             <div className="font-extrabold text-xl text-gray-800">Hi, {kid.name}!</div>
             {kid.streak.count > 1 && (
@@ -81,6 +108,23 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
           </div>
         </div>
       </div>
+
+      {/* build-your-buddy CTA */}
+      {!kid.buddy && (
+        <button
+          onClick={() => go({ name: "buddy", kidId: kid.id })}
+          className="card max-w-3xl mx-auto mt-4 p-4 w-full flex items-center justify-between active:scale-[0.98] block"
+          style={{ border: "3px dashed #a78bfa" }}
+        >
+          <div className="text-left">
+            <div className="font-extrabold text-violet-700 text-lg">🛠️ Build your buddy!</div>
+            <div className="text-sm text-gray-500">
+              Create your very own coach — they'll talk to you and cheer you on!
+            </div>
+          </div>
+          <span className="text-4xl">🧸</span>
+        </button>
+      )}
 
       {/* review nudge */}
       {reviewsDue > 0 && (

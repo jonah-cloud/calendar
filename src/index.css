@@ -24,3 +24,57 @@ body {
   line-height: 1.4;
   word-break: break-all;
 }
+
+/* ---- buddy animations ---- */
+
+@keyframes buddy-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.buddy-bob { animation: buddy-bob 2.4s ease-in-out infinite; }
+
+@keyframes buddy-cheer {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(-4deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-10px) rotate(4deg); }
+}
+.buddy-cheer { animation: buddy-cheer 0.9s ease-in-out infinite; }
+
+@keyframes buddy-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96%, 98% { transform: scaleY(0.1); }
+}
+.buddy-eyes {
+  transform-origin: 60px 57px;
+  animation: buddy-blink 4.2s infinite;
+}
+
+@keyframes buddy-talk {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.35); }
+}
+.buddy-talk {
+  transform-origin: 60px 76px;
+  animation: buddy-talk 0.28s ease-in-out infinite;
+}
+
+@keyframes buddy-twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.buddy-twinkle { animation: buddy-twinkle 1.6s ease-in-out infinite; }
+
+/* balloon breathing exercise */
+@keyframes balloon-breathe {
+  0%, 100% { transform: scale(0.55); }
+  50% { transform: scale(1); }
+}
+.balloon-breathe { animation: balloon-breathe 8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-bob, .buddy-cheer, .buddy-talk, .buddy-twinkle, .balloon-breathe,
+  .animate-pop, .animate-wiggle {
+    animation: none;
+  }
+}
