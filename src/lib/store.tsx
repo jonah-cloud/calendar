@@ -92,6 +92,7 @@ export type Action =
       minutes: number;
       mode: "learn" | "review" | "placement";
       reviewedUnits?: string[];
+      avgMs?: number;
     }
   | { type: "REDEEM"; kidId: string; rewardId: string }
   | { type: "RESOLVE_REDEMPTION"; kidId: string; redemptionId: string; approve: boolean }
@@ -162,6 +163,7 @@ function reducer(state: AppState, action: Action): AppState {
           mastered,
           minutes: action.minutes,
           mode: action.mode,
+          avgMs: action.avgMs,
         };
         let newProg = { ...prog, history: [...prog.history, result].slice(-500) };
 

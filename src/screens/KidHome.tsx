@@ -1,4 +1,5 @@
 import type { View } from "../App";
+import { coachFor } from "../lib/coaches";
 import { SUBJECTS, subjectById } from "../lib/content";
 import { dueReviews, nextUnit, todaysPlan, totalDueReviews } from "../lib/engine";
 import { todayISO } from "../lib/rand";
@@ -104,9 +105,11 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
               <div key={s.id} className="card p-4" style={{ borderTop: `6px solid ${s.color}` }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-3xl">{s.emoji}</span>
+                    <span className="text-3xl">{coachFor(s.id).emoji}</span>
                     <div>
-                      <div className="font-extrabold text-gray-800">{s.name}</div>
+                      <div className="font-extrabold text-gray-800">
+                        {s.name} <span className="text-xs font-bold text-gray-400">with {coachFor(s.id).name}</span>
+                      </div>
                       <div className="text-xs text-gray-500">
                         Level {prog.level} · {lvl?.name}
                       </div>
@@ -141,7 +144,7 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
                         className="flex-1 btn-big py-2.5 text-base text-white"
                         style={{ background: s.color }}
                       >
-                        Learn ▶
+                        {s.id === "math" ? "Mission! 🐆" : "Learn ▶"}
                       </button>
                       {due > 0 && (
                         <button

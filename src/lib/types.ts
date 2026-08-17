@@ -9,6 +9,8 @@ export interface Question {
   choices: string[];
   answer: number; // index into choices
   explain?: string;
+  /** Step-by-step walkthrough the animal coach gives after a wrong answer. */
+  steps?: string[];
 }
 
 /** A static authored question: prompt, correct answer, wrong answers. */
@@ -57,6 +59,8 @@ export interface RoundResult {
   mastered: boolean;
   minutes: number;
   mode: "learn" | "review" | "placement";
+  /** Average ms per answer — used to track math-fact fluency. */
+  avgMs?: number;
 }
 
 export interface SubjectProgress {

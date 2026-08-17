@@ -132,6 +132,9 @@ export default function GuideDashboard({ go }: { go: (v: View) => void }) {
                           <div className="text-[11px] text-gray-600 mt-1">
                             {prog.mastered.length} skills mastered
                             {acc !== null && ` · ${Math.round(acc * 100)}% accuracy (7d)`}
+                            {s.id === "math" && fluency(prog.history) !== null && (
+                              <> · ⚡{fluency(prog.history)}s avg answer</>
+                            )}
                           </div>
                         </div>
                       );
@@ -217,6 +220,14 @@ export default function GuideDashboard({ go }: { go: (v: View) => void }) {
       </div>
     </div>
   );
+}
+
+/** Average seconds per answer over the last 5 math rounds — the fact-fluency number. */
+function fluency(history: { avgMs?: number }[]): string | null {
+  const recent = history.filter((r) => r.avgMs).slice(-5);
+  if (!recent.length) return null;
+  const avg = recent.reduce((n, r) => n + (r.avgMs ?? 0), 0) / recent.length;
+  return (avg / 1000).toFixed(1);
 }
 
 function addDaysISO(iso: string, days: number): string {

@@ -21,7 +21,13 @@ export function sample<T>(arr: T[], n: number): T[] {
 }
 
 /** Build a multiple-choice question from a numeric answer with nearby distractors. */
-export function numQ(prompt: string, answer: number, visual?: string, explain?: string): Question {
+export function numQ(
+  prompt: string,
+  answer: number,
+  visual?: string,
+  explain?: string,
+  steps?: string[]
+): Question {
   const wrong = new Set<number>();
   const spread = Math.max(2, Math.round(Math.abs(answer) * 0.25));
   let guard = 0;
@@ -36,7 +42,7 @@ export function numQ(prompt: string, answer: number, visual?: string, explain?: 
     f += 2;
   }
   const choices = shuffle([answer, ...wrong]).map(String);
-  return { prompt, visual, choices, answer: choices.indexOf(String(answer)), explain };
+  return { prompt, visual, choices, answer: choices.indexOf(String(answer)), explain, steps };
 }
 
 /** Turn a StaticQ into a shuffled Question. */
