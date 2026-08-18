@@ -4,6 +4,8 @@ import { READING_LEVELS } from "./reading";
 import { SPANISH_LEVELS } from "./spanish";
 import { MUSIC_LEVELS } from "./music";
 import { SCIENCE_LEVELS } from "./science";
+import { HISTORY_LEVELS } from "./history";
+import { GEOGRAPHY_LEVELS } from "./geography";
 
 export const SUBJECTS: SubjectDef[] = [
   { id: "math", name: "Math", emoji: "🔢", color: "#2563eb", soft: "#dbeafe", levels: MATH_LEVELS },
@@ -11,6 +13,8 @@ export const SUBJECTS: SubjectDef[] = [
   { id: "spanish", name: "Spanish", emoji: "🌮", color: "#ea580c", soft: "#ffedd5", levels: SPANISH_LEVELS },
   { id: "music", name: "Music", emoji: "🎵", color: "#7c3aed", soft: "#ede9fe", levels: MUSIC_LEVELS },
   { id: "science", name: "Science", emoji: "🔬", color: "#059669", soft: "#d1fae5", levels: SCIENCE_LEVELS },
+  { id: "history", name: "History", emoji: "🏛️", color: "#a16207", soft: "#fef3c7", levels: HISTORY_LEVELS },
+  { id: "geography", name: "Geography", emoji: "🌍", color: "#0891b2", soft: "#cffafe", levels: GEOGRAPHY_LEVELS },
 ];
 
 export const subjectById = (id: SubjectId): SubjectDef =>

@@ -105,6 +105,38 @@ export const COACHES: Record<SubjectId, Coach> = {
     zoom: ["Faster than a chemical reaction!", "Instant results — my favorite kind!", "You answered at the speed of light! (299,792,458 m/s. I checked.)"],
     reveal: (a) => `The answer is "${a}". Scientists repeat their experiments — so say it once, wiggle your fingers like a mad scientist, and say it again!`,
   },
+  history: {
+    name: "Barnaby",
+    emoji: "🐢",
+    title: "Barnaby the Tortoise · 512-Year-Old History Keeper",
+    voice: { pitch: 0.8, rate: 0.85 },
+    oops: [
+      "Hmm, not quite, young sprout. And I should know — I was THERE. (I was napping, but I was there.) Let me tell you how it really went:",
+      "Ah ah ah, hold your horses! And I've held actual horses. The true story goes like this:",
+      "Not that one, my dear. History is tricky — even I mix up the 1600s and the 1700s. (Wild centuries, both of them.) Here's the scoop:",
+      "Oops-a-shell! No worries — I've had 512 years to learn this stuff and you've had, what, seven? Gather 'round:",
+      "Close, but my wrinkles say otherwise! Let old Barnaby paint you the picture:",
+    ],
+    praise: ["Splendid, young historian!", "Correct! Just like I remember it!", "You'd have made a fine explorer!", "My shell is tingling — well done!", "History will remember THAT answer!"],
+    zoom: ["Great galloping centuries, that was fast!", "Faster than the Pony Express!", "You answered quicker than I blink! (I blink very slowly.)"],
+    reveal: (a) => `The answer is "${a}". Say it slowly, like a story around a campfire — that's how history sticks to your shell.`,
+  },
+  geography: {
+    name: "Amelia",
+    emoji: "🪿",
+    title: "Amelia the Goose · Round-the-World Navigator",
+    voice: { pitch: 1.25, rate: 1.0 },
+    oops: [
+      "HONK — wrong turn! Happens to the best of us. I once flew to the wrong continent. (Don't tell the flock.) Here's the route:",
+      "Whoopsie, that's off the map! Lucky for you I've flown over this EXACT spot. Wings up, look here:",
+      "Not that way, little navigator! Even my GPS is just me squinting at rivers. Let me show you:",
+      "HONK HONK — recalculating! No biggie, every great explorer takes a wrong turn or two. The real path:",
+      "Hmm, my compass feathers say no. Here's the lay of the land:",
+    ],
+    praise: ["HONK of approval!", "Navigator-level correct!", "You could lead the flock!", "My wings are applauding!", "That answer flew straight and true!"],
+    zoom: ["Faster than a tailwind!", "You answered at migration speed!", "Zoom! That was supersonic, honk!"],
+    reveal: (a) => `The answer is "${a}". Trace it in the air like you're drawing a map — flap, I mean, hands up — "${a}"! Now it's on YOUR map forever.`,
+  },
 };
 
 export const coachFor = (s: SubjectId) => COACHES[s];

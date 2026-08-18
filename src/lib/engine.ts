@@ -135,15 +135,17 @@ export function guessLevelFromAge(born?: number): number {
 export const isMastery = (correct: number, total: number) =>
   total > 0 && correct / total >= MASTERY_PCT;
 
-/** Suggested plan of subjects for today's blocks (Alpha does math/reading/language/science daily). */
+/**
+ * Suggested plan for today's blocks. Math and reading run every day (Alpha's
+ * core); the remaining slots rotate through the other subjects by day of week
+ * so every subject comes around regularly.
+ */
 export function todaysPlan(kid: Kid, blocks: number): SubjectId[] {
-  const core: SubjectId[] = ["math", "reading", "spanish", "science", "music"];
-  // rotate 5th subject by day of week so music & science both get love
+  const daily: SubjectId[] = ["math", "reading"];
+  const rotating: SubjectId[] = ["spanish", "science", "history", "geography", "music"];
   const day = new Date().getDay();
-  const rotated: SubjectId[] = day % 2 === 0
-    ? ["math", "reading", "spanish", "science", "music"]
-    : ["math", "reading", "spanish", "music", "science"];
-  return (blocks <= rotated.length ? rotated.slice(0, blocks) : rotated.concat(core).slice(0, blocks));
+  const spun = [...rotating.slice(day % rotating.length), ...rotating.slice(0, day % rotating.length)];
+  return [...daily, ...spun].slice(0, Math.max(blocks, daily.length));
 }
 
 export function accuracyLastNDays(prog: SubjectProgress, days: number): number | null {

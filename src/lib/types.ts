@@ -1,6 +1,13 @@
 // ---------- Content model ----------
 
-export type SubjectId = "math" | "reading" | "spanish" | "music" | "science";
+export type SubjectId =
+  | "math"
+  | "reading"
+  | "spanish"
+  | "music"
+  | "science"
+  | "history"
+  | "geography";
 
 export interface Question {
   prompt: string;
