@@ -3,6 +3,7 @@ import type { View } from "../App";
 import BuddyAvatar from "../components/BuddyAvatar";
 import CoachCharacter from "../components/CoachCharacter";
 import { AnswerTile, BigButton, Confetti, KidBg } from "../components/Ui";
+import WorkedExample from "../components/WorkedExample";
 import LessonFlow from "../components/LessonFlow";
 import { MASTERY_PCT, subjectById } from "../lib/content";
 import { interactiveFor } from "../lib/content/interactive";
@@ -96,6 +97,12 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
   const [overlay, setOverlay] = useState<"none" | "intervene" | "breathe">("none");
   const [easyOverrides, setEasyOverrides] = useState<Record<number, Question>>({});
   const [checkin, setCheckin] = useState<string | null>(null);
+  /** showing the visual walkthrough for the current question */
+  const [walkthrough, setWalkthrough] = useState(false);
+  /** questions whose result is already recorded (so a retry doesn't double-count) */
+  const recordedRef = useRef<Set<number>>(new Set());
+  /** questions that already got a walkthrough — never trap a kid in a loop */
+  const walkedRef = useRef<Set<number>>(new Set());
 
   const trackerRef = useRef(newTracker());
 
@@ -152,11 +159,29 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
     const fast = right && ms < FAST_MS;
     setChosen(i);
     setCheckin(null);
-    setAnswers((a) => [...a, right]);
-    setFastFlags((f) => [...f, fast]);
 
-    const moment = trackAnswer(trackerRef.current, right, ms, mode === "learn");
+    // Only the FIRST attempt at a question counts — a retry after the coach's
+    // walkthrough is practice, not a second score.
+    const firstAttempt = !recordedRef.current.has(idx);
+    if (firstAttempt) {
+      recordedRef.current.add(idx);
+      setAnswers((a) => [...a, right]);
+      setFastFlags((f) => [...f, fast]);
+    }
+    // Only first attempts feed the struggle tracker — a guided retry is
+    // practice, and shouldn't count as another miss.
+    const moment = firstAttempt
+      ? trackAnswer(trackerRef.current, right, ms, mode === "learn")
+      : null;
     setBuddyMoment(moment && moment.kind !== "intervene" ? moment : null);
+
+    // A wrong answer with a visual explanation opens the walkthrough — but only
+    // once per question (so nobody gets stuck in a loop), and never when the
+    // buddy is stepping in with a huddle, which takes priority.
+    if (!right && q.work?.length && !walkedRef.current.has(idx) && moment?.kind !== "intervene") {
+      walkedRef.current.add(idx);
+      setWalkthrough(true);
+    }
 
     if (right) {
       const line = fast ? randomZoom(subject) : randomPraise(subject);
@@ -169,6 +194,8 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
       if (moment?.kind === "guessing") {
         // she's rushing, not confused — buddy handles it, coach box still shows steps
         speak(moment.line, buddyVoice(buddy));
+      } else if (q.work?.length) {
+        speak(line, coach.voice);
       } else if (q.steps) {
         speakLines([line, ...q.steps], coach.voice);
       } else {
@@ -192,6 +219,7 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
 
   const reallyNext = () => {
     setBuddyMoment(null);
+    setWalkthrough(false);
     if (idx + 1 >= total) {
       finish([...answers]);
     } else {
@@ -530,7 +558,11 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
               {q!.visual}
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 ${
+              wrong && walkthrough && q!.work?.length ? "hidden" : ""
+            }`}
+          >
             {q!.choices.map((c, i) => {
               const isAnswer = i === q!.answer;
               const isChosen = chosen === i;
@@ -542,7 +574,20 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
           {/* feedback */}
           {chosen !== null && (
             <div className="mt-4 animate-pop">
-              {wrong ? (
+              {wrong && walkthrough && q!.work?.length ? (
+                <WorkedExample
+                  subject={subject}
+                  coach={coach}
+                  def={def}
+                  steps={q!.work!}
+                  onRetry={() => {
+                    setWalkthrough(false);
+                    setChosen(null);
+                    setCoachLine("");
+                    qStartRef.current = Date.now();
+                  }}
+                />
+              ) : wrong ? (
                 <div className="rounded-2xl p-4" style={{ background: def.soft }}>
                   <div className="flex items-start gap-3">
                     <div style={{ color: def.color }}><CoachCharacter subject={subject} size={84} mood="oops" /></div>
@@ -584,9 +629,17 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
                 </div>
               )}
 
-              <BigButton onClick={next} color={def.color} className="mt-4 w-full">
-                {idx + 1 >= total ? (isMathGame && mode !== "placement" ? "Finish the mission! 🏁" : "See results ✨") : wrong ? "Got it — next! ➡️" : "Next ➡️"}
-              </BigButton>
+              {!(wrong && walkthrough && q!.work?.length) && (
+                <BigButton onClick={next} color={def.color} className="mt-4 w-full">
+                  {idx + 1 >= total
+                    ? isMathGame && mode !== "placement"
+                      ? "Finish the mission! 🏁"
+                      : "See results ✨"
+                    : wrong
+                      ? "Got it — next! ➡️"
+                      : "Next ➡️"}
+                </BigButton>
+              )}
             </div>
           )}
         </div>

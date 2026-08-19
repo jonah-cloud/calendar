@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { View } from "../App";
 import { SUBJECTS } from "../lib/content";
 import { WORKSHOPS } from "../lib/content/workshops";
 import { accuracyLastNDays, subjectCompletion } from "../lib/engine";
 import { todayISO, uid } from "../lib/rand";
+import { getPreferredVoice, listVoices, setPreferredVoice, speak } from "../lib/speech";
 import { useStore } from "../lib/store";
 
 export default function GuideDashboard({ go }: { go: (v: View) => void }) {
   const { state, dispatch } = useStore();
   const [unlocked, setUnlocked] = useState(!state.settings.pin);
   const [pinInput, setPinInput] = useState("");
-  const [tab, setTab] = useState<"progress" | "approvals" | "rewards" | "settings" | "playbook">("progress");
+  const [tab, setTab] = useState<"progress" | "approvals" | "rewards" | "voices" | "settings" | "playbook">("progress");
   const today = todayISO();
 
   if (!unlocked) {
@@ -69,6 +70,7 @@ export default function GuideDashboard({ go }: { go: (v: View) => void }) {
               ["progress", "📊 Progress"],
               ["approvals", `✅ Approvals${pendingCount ? ` (${pendingCount})` : ""}`],
               ["rewards", "🎁 Rewards"],
+              ["voices", "🔊 Voices"],
               ["settings", "⚙️ Settings"],
               ["playbook", "📖 Playbook"],
             ] as const
@@ -212,6 +214,9 @@ export default function GuideDashboard({ go }: { go: (v: View) => void }) {
         {/* REWARDS */}
         {tab === "rewards" && <RewardsEditor />}
 
+        {/* VOICES */}
+        {tab === "voices" && <VoicePicker />}
+
         {/* SETTINGS */}
         {tab === "settings" && <SettingsPanel />}
 
@@ -234,6 +239,89 @@ function addDaysISO(iso: string, days: number): string {
   const d = new Date(iso + "T12:00:00");
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+function VoicePicker() {
+  const [voices, setVoices] = useState(() => listVoices());
+  const [chosen, setChosen] = useState<string | null>(getPreferredVoice());
+
+  // voices load asynchronously in some browsers
+  useEffect(() => {
+    if (voices.length) return;
+    const t = setInterval(() => {
+      const v = listVoices();
+      if (v.length) {
+        setVoices(v);
+        clearInterval(t);
+      }
+    }, 400);
+    return () => clearInterval(t);
+  }, [voices.length]);
+
+  const sample = (name: string | null) =>
+    speak("Hi! I'm your coach. Let's learn something amazing today!", { pitch: 1, rate: 1 });
+
+  const choose = (name: string | null) => {
+    setPreferredVoice(name);
+    setChosen(name);
+    setTimeout(() => sample(name), 60);
+  };
+
+  return (
+    <div className="mt-5 space-y-4">
+      <div className="card p-5">
+        <div className="font-extrabold text-gray-800">Pick the best-sounding voice</div>
+        <p className="text-sm text-gray-500 mt-1">
+          Voices come from the device, so the good ones differ between a laptop, an iPad, and a
+          phone. Tap any voice to hear it — the one you pick is used by every coach. Voices marked
+          ⭐ are the natural-sounding ones and are usually the best choice.
+        </p>
+        {!voices.length && (
+          <p className="text-sm font-bold text-amber-600 mt-3">
+            No voices detected yet — tap anywhere on the page first, then reopen this tab.
+          </p>
+        )}
+      </div>
+
+      {voices.length > 0 && (
+        <div className="card p-4 space-y-2">
+          <button
+            onClick={() => choose(null)}
+            className={`w-full text-left rounded-2xl px-4 py-3 font-bold ${
+              chosen === null ? "bg-violet-600 text-white" : "bg-gray-50 text-gray-700"
+            }`}
+          >
+            🤖 Automatic — a different voice per animal
+            {chosen === null && <span className="ml-2">✓</span>}
+          </button>
+          {voices.map((v) => (
+            <button
+              key={v.name}
+              onClick={() => choose(v.name)}
+              className={`w-full text-left rounded-2xl px-4 py-3 font-bold flex items-center gap-2 ${
+                chosen === v.name ? "bg-violet-600 text-white" : "bg-gray-50 text-gray-700"
+              }`}
+            >
+              <span>{v.premium ? "⭐" : "🔈"}</span>
+              <span className="flex-1 truncate">{v.name}</span>
+              {chosen === v.name && <span>✓</span>}
+              <span className="text-xs opacity-70">tap to hear</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="card p-5">
+        <div className="font-extrabold text-gray-800 mb-1">Want dramatically better voices?</div>
+        <p className="text-sm text-gray-500">
+          On a Mac or iPad: <b>Settings → Accessibility → Spoken Content → Voices</b> and download an
+          "Enhanced" or "Premium" English voice (Ava, Zoe, and Evan are excellent). On Windows:{" "}
+          <b>Settings → Time &amp; Language → Speech</b> → add a Natural voice. They appear here
+          after a browser restart.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function RewardsEditor() {

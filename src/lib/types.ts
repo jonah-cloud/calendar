@@ -1,3 +1,5 @@
+import type { WorkStep } from "./viz";
+
 // ---------- Content model ----------
 
 export type SubjectId =
@@ -18,6 +20,8 @@ export interface Question {
   explain?: string;
   /** Step-by-step walkthrough the animal coach gives after a wrong answer. */
   steps?: string[];
+  /** Visual worked example (math) — shown one picture at a time. */
+  work?: WorkStep[];
 }
 
 /** A static authored question: prompt, correct answer, wrong answers. */

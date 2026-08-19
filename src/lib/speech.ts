@@ -21,6 +21,36 @@ export interface VoiceStyle {
 export type Timbre = "bright" | "warm" | "deep" | "silly" | "gentle" | "crisp" | "young";
 
 const MUTE_KEY = "spark-academy-muted";
+const VOICE_KEY = "spark-academy-voice";
+
+/** A parent-chosen voice name overrides all automatic picking. */
+let preferredVoiceName: string | null = null;
+try {
+  preferredVoiceName = localStorage.getItem(VOICE_KEY);
+} catch {
+  /* no storage */
+}
+
+export const getPreferredVoice = () => preferredVoiceName;
+export function setPreferredVoice(name: string | null) {
+  preferredVoiceName = name;
+  try {
+    if (name) localStorage.setItem(VOICE_KEY, name);
+    else localStorage.removeItem(VOICE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Neural / cloud voices are synthesised whole. Bending their pitch is exactly
+ * what makes them sound robotic and warbly, so we leave them completely alone
+ * and get character from picking DIFFERENT voices instead.
+ */
+function isPremiumVoice(v: SpeechSynthesisVoice | null): boolean {
+  if (!v) return false;
+  return v.localService === false || /natural|neural|enhanced|premium|siri|google/i.test(v.name);
+}
 
 let muted = false;
 try {
@@ -150,6 +180,10 @@ const TIMBRE_NAME_HINTS: Partial<Record<Timbre, string[]>> = {
 function voiceFor(timbre?: Timbre): SpeechSynthesisVoice | null {
   if (!voicesReady) loadVoices();
   if (!englishVoices.length) return null;
+  if (preferredVoiceName) {
+    const chosen = englishVoices.find((v) => v.name === preferredVoiceName);
+    if (chosen) return chosen;
+  }
   if (!timbre) return englishVoices[0];
 
   // 1) a voice whose name suits this character
@@ -161,6 +195,12 @@ function voiceFor(timbre?: Timbre): SpeechSynthesisVoice | null {
   // 2) otherwise spread characters across the best voices, wrapping if few exist
   const idx = TIMBRE_ORDER.indexOf(timbre);
   return englishVoices[idx % englishVoices.length] ?? englishVoices[0];
+}
+
+/** All usable English voices, best first — for the parent's voice picker. */
+export function listVoices(): { name: string; premium: boolean }[] {
+  if (!voicesReady) loadVoices();
+  return englishVoices.map((v) => ({ name: v.name, premium: isPremiumVoice(v) }));
 }
 
 function voiceForLang(lang: string): SpeechSynthesisVoice | null {
@@ -203,15 +243,18 @@ function cleanForSpeech(text: string): string {
 function toPhrases(text: string): string[] {
   const clean = cleanForSpeech(text);
   if (!clean) return [];
-  const rough = clean
-    .split(/(?<=[.!?])\s+|(?<=[,;:])\s+(?=\w{4,})|\s+—\s+/g)
-    .map((s) => s.trim())
+  // Short lines are spoken in one breath — splitting them is what made the
+  // delivery choppy, because browsers insert a real pause between utterances.
+  if (clean.length < 170) return [clean];
+  const sentences = clean
+    .split(/(?<=[.!?])\s+/g)
+    .map((x) => x.trim())
     .filter(Boolean);
-  // Recombine very short fragments so we don't stutter.
   const out: string[] = [];
-  for (const piece of rough) {
+  for (const piece of sentences) {
     const last = out[out.length - 1];
-    if (last && (last.length < 18 || piece.length < 12)) out[out.length - 1] = `${last} ${piece}`;
+    // Keep chunks reasonably long so it still flows like speech.
+    if (last && last.length + piece.length < 190) out[out.length - 1] = `${last} ${piece}`;
     else out.push(piece);
   }
   return out.length ? out : [clean];
@@ -236,15 +279,17 @@ function enqueue(phrases: string[], style: VoiceStyle, lang?: string) {
   const synth = window.speechSynthesis;
   if (!synth) return;
   const voice = lang ? voiceForLang(lang) : voiceFor(style.timbre);
-  // Keep pitch in a human band — extreme values are what sound synthetic.
-  const basePitch = clamp(style.pitch, 0.72, 1.5);
-  const baseRate = clamp(style.rate, 0.72, 1.28);
+  const premium = isPremiumVoice(voice);
+
+  // Premium voices: leave pitch untouched (bending them is what sounds awful)
+  // and keep rate close to natural. Basic local voices can take more shaping.
+  const basePitch = premium ? 1 : clamp(style.pitch, 0.8, 1.35);
+  const baseRate = premium ? clamp(style.rate, 0.9, 1.1) : clamp(style.rate, 0.8, 1.2);
 
   phrases.forEach((phrase, i) => {
     const u = new SpeechSynthesisUtterance(phrase);
-    // Ease into the first phrase and vary each one a touch.
-    u.pitch = clamp(basePitch * wobble(0.05), 0.5, 2);
-    u.rate = clamp(baseRate * wobble(0.04) * (i === 0 ? 0.97 : 1), 0.5, 2);
+    u.pitch = premium ? 1 : clamp(basePitch * wobble(0.03), 0.6, 1.6);
+    u.rate = premium ? baseRate : clamp(baseRate * wobble(0.02), 0.6, 1.5);
     u.volume = 1;
     if (voice) u.voice = voice;
     if (lang) u.lang = lang;
