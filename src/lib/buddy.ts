@@ -131,14 +131,14 @@ export interface VoicePreset {
 }
 
 export const VOICE_PRESETS: VoicePreset[] = [
-  { id: "bubbles", label: "Bubbles", emoji: "🫧", blurb: "squeaky & silly", style: { pitch: 1.7, rate: 1.1 } },
-  { id: "sunny", label: "Sunny", emoji: "🌞", blurb: "bright & cheery", style: { pitch: 1.35, rate: 1.05 } },
-  { id: "zippy", label: "Zippy", emoji: "⚡", blurb: "super speedy", style: { pitch: 1.5, rate: 1.3 } },
-  { id: "breeze", label: "Breeze", emoji: "🍃", blurb: "calm & gentle", style: { pitch: 1.15, rate: 0.95 } },
-  { id: "coco", label: "Coco", emoji: "🍫", blurb: "warm & friendly", style: { pitch: 1.0, rate: 1.0 } },
-  { id: "dreamy", label: "Dreamy", emoji: "🌙", blurb: "slow & cozy", style: { pitch: 1.05, rate: 0.8 } },
-  { id: "robo", label: "Robo", emoji: "🤖", blurb: "beep boop", style: { pitch: 0.8, rate: 1.18 } },
-  { id: "rumble", label: "Rumble", emoji: "🐻", blurb: "big & deep", style: { pitch: 0.7, rate: 0.88 } },
+  { id: "bubbles", label: "Bubbles", emoji: "🫧", blurb: "squeaky & silly", style: { pitch: 1.42, rate: 1.06, timbre: "silly" } },
+  { id: "sunny", label: "Sunny", emoji: "🌞", blurb: "bright & cheery", style: { pitch: 1.22, rate: 1.04, timbre: "bright" } },
+  { id: "zippy", label: "Zippy", emoji: "⚡", blurb: "super speedy", style: { pitch: 1.28, rate: 1.24, timbre: "young" } },
+  { id: "breeze", label: "Breeze", emoji: "🍃", blurb: "calm & gentle", style: { pitch: 1.08, rate: 0.94, timbre: "gentle" } },
+  { id: "coco", label: "Coco", emoji: "🍫", blurb: "warm & friendly", style: { pitch: 1.0, rate: 1.0, timbre: "warm" } },
+  { id: "dreamy", label: "Dreamy", emoji: "🌙", blurb: "slow & cozy", style: { pitch: 1.02, rate: 0.82, timbre: "gentle" } },
+  { id: "robo", label: "Robo", emoji: "🤖", blurb: "beep boop", style: { pitch: 0.82, rate: 1.16, timbre: "crisp" } },
+  { id: "rumble", label: "Rumble", emoji: "🐻", blurb: "big & deep", style: { pitch: 0.74, rate: 0.9, timbre: "deep" } },
 ];
 
 export const buddyVoice = (b: BuddyConfig): VoiceStyle =>

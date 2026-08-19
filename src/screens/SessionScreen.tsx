@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { View } from "../App";
-import BuddyAvatar, { type BuddyMood } from "../components/BuddyAvatar";
+import BuddyAvatar from "../components/BuddyAvatar";
+import CoachCharacter from "../components/CoachCharacter";
+import { AnswerTile, BigButton, Confetti, KidBg } from "../components/Ui";
 import LessonFlow from "../components/LessonFlow";
 import { MASTERY_PCT, subjectById } from "../lib/content";
 import { interactiveFor } from "../lib/content/interactive";
@@ -288,9 +290,9 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
           <p className="text-gray-500 mt-2">
             {mode === "review" ? "No reviews are due. Amazing memory!" : "You've mastered everything available!"}
           </p>
-          <button onClick={() => go({ name: "kid", kidId: kid.id })} className="btn-big mt-6 text-white w-full" style={{ background: def.color }}>
+          <BigButton onClick={() => go({ name: "kid", kidId: kid.id })} color={def.color} className="mt-6 w-full">
             Back home
-          </button>
+          </BigButton>
         </div>
       </Screen>
     );
@@ -309,25 +311,33 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
     if (isMathGame && mode !== "placement") {
       return (
         <Screen def={def}>
-          <div className="card p-8 text-center max-w-md mx-auto mt-16 animate-pop">
-            <div className="flex justify-center">
-              <BuddyAvatar buddy={buddy} size={90} mood={mastered ? "cheer" : "concerned"} />
+          <div className="card-pop p-8 text-center max-w-md mx-auto mt-12 animate-pop">
+            {mastered && <Confetti />}
+            <div className="flex justify-center items-end gap-2" style={{ color: def.color }}>
+              <CoachCharacter subject={subject} size={mastered ? 132 : 108} mood={mastered ? "excited" : "oops"} />
+              <BuddyAvatar buddy={buddy} size={72} mood={mastered ? "cheer" : "concerned"} />
             </div>
             {mastered ? (
               <>
-                <div className="font-extrabold text-2xl text-gray-800 mt-2">MISSION COMPLETE!</div>
-                <div className="text-3xl mt-2">{"🌟".repeat(stars)}{"☆".repeat(3 - stars)}</div>
-                <p className="text-gray-600 mt-3 font-semibold">{theme.win}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  ⚡ {fastCount} lightning answer{fastCount === 1 ? "" : "s"}!{" "}
-                  {stars < 3 && "Even faster next time — that's how facts become automatic!"}
-                </p>
+                <div className="font-black text-3xl text-gray-800 mt-3">MISSION COMPLETE!</div>
+                <div className="flex justify-center gap-1 mt-3">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className={`text-5xl ${i < stars ? "animate-star" : "opacity-25"}`} style={{ animationDelay: `${i * 0.18}s` }}>
+                      {i < stars ? "🌟" : "☆"}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-gray-600 mt-3 font-bold text-lg">{theme.win}</p>
+                <div className="mt-3 inline-block px-4 py-2 rounded-2xl bg-amber-100 font-black text-amber-600">
+                  ⚡ {fastCount} lightning answers
+                </div>
+                {stars < 3 && <p className="text-sm text-gray-400 mt-2 font-semibold">Even faster next time for 3 stars!</p>}
               </>
             ) : (
               <>
-                <div className="font-extrabold text-2xl text-gray-800 mt-2">Sooo close!</div>
-                <p className="text-gray-600 mt-3 font-semibold">{theme.almost}</p>
-                <p className="text-sm text-gray-500 mt-2">
+                <div className="font-black text-3xl text-gray-800 mt-3">Sooo close!</div>
+                <p className="text-gray-600 mt-3 font-bold text-lg">{theme.almost}</p>
+                <p className="text-sm text-gray-500 mt-2 font-semibold">
                   {buddy.name} says: every champion runs the track twice. You worked hard on the
                   tricky ones — that's exactly how it's supposed to feel!
                 </p>
@@ -335,17 +345,19 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
             )}
             <div className="flex gap-3 mt-6">
               {mode === "learn" && !mastered && (
-                <button onClick={() => go({ name: "session", kidId: kid.id, subject, mode: "learn" })} className="btn-big flex-1 text-white" style={{ background: def.color }}>
-                  Run it again! 🐆
-                </button>
+                <BigButton onClick={() => go({ name: "session", kidId: kid.id, subject, mode: "learn" })} color={def.color} className="flex-1">
+                  Again! 🔁
+                </BigButton>
               )}
-              <button
-                onClick={() => go({ name: "kid", kidId: kid.id })}
-                className={`btn-big flex-1 ${mode === "learn" && !mastered ? "bg-gray-100 text-gray-600" : "text-white"}`}
-                style={mode === "learn" && !mastered ? {} : { background: def.color }}
-              >
-                {mastered ? "Next mission! 🚀" : "Home"}
-              </button>
+              {mode === "learn" && !mastered ? (
+                <button onClick={() => go({ name: "kid", kidId: kid.id })} className="btn-soft flex-1 bg-gray-100 text-gray-600 px-6 py-4 text-xl">
+                  Home
+                </button>
+              ) : (
+                <BigButton onClick={() => go({ name: "kid", kidId: kid.id })} color={def.color} className="flex-1">
+                  Next mission! 🚀
+                </BigButton>
+              )}
             </div>
           </div>
         </Screen>
@@ -354,11 +366,15 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
 
     return (
       <Screen def={def}>
-        <div className="card p-8 text-center max-w-md mx-auto mt-16 animate-pop">
-          <div className="text-6xl mb-3">
+        <div className="card-pop p-8 text-center max-w-md mx-auto mt-12 animate-pop">
+          {mastered && <Confetti />}
+          <div className="flex justify-center" style={{ color: def.color }}>
+            <CoachCharacter subject={subject} size={mastered ? 132 : 112} mood={mastered ? "excited" : pct >= 0.7 ? "happy" : "idle"} />
+          </div>
+          <div className="text-5xl my-1">
             {mode === "placement" ? "🧭" : mastered ? "🌟" : pct >= 0.7 ? "💪" : "🌱"}
           </div>
-          <div className="font-extrabold text-2xl text-gray-800">
+          <div className="font-black text-3xl text-gray-800">
             {mode === "placement"
               ? `You're starting at Level ${placedLevel}!`
               : mastered
@@ -368,8 +384,12 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
                   : "Good practice!"}
           </div>
           {mode !== "placement" && !isMathGame && (
-            <div className="text-lg text-gray-600 mt-2">
-              {correct} / {answers.length} correct ({Math.round(pct * 100)}%)
+            <div className="flex justify-center gap-1.5 mt-4 flex-wrap">
+              {answers.map((a, i) => (
+                <span key={i} className={`w-8 h-8 rounded-xl flex items-center justify-center text-lg font-black ${a ? "bg-green-100" : "bg-red-100"}`}>
+                  {a ? "✓" : "✕"}
+                </span>
+              ))}
             </div>
           )}
           {mode === "learn" && !mastered && (
@@ -380,23 +400,25 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
           )}
           {mode === "placement" && (
             <p className="text-sm text-gray-500 mt-2">
-              {coach.emoji} {coach.name} will start {def.name} right at your level — not too easy,
+              {coach.name} will start {def.name} right at your level — not too easy,
               not too hard.
             </p>
           )}
           <div className="flex gap-3 mt-6">
             {mode === "learn" && !mastered && (
-              <button onClick={() => go({ name: "session", kidId: kid.id, subject, mode: "learn" })} className="btn-big flex-1 text-white" style={{ background: def.color }}>
+              <BigButton onClick={() => go({ name: "session", kidId: kid.id, subject, mode: "learn" })} color={def.color} className="flex-1">
                 Try again 🔁
-              </button>
+              </BigButton>
             )}
-            <button
-              onClick={() => go({ name: "kid", kidId: kid.id })}
-              className={`btn-big flex-1 ${mode === "learn" && !mastered ? "bg-gray-100 text-gray-600" : "text-white"}`}
-              style={mode === "learn" && !mastered ? {} : { background: def.color }}
-            >
-              {mastered ? "Next! 🚀" : "Home"}
-            </button>
+            {mode === "learn" && !mastered ? (
+              <button onClick={() => go({ name: "kid", kidId: kid.id })} className="btn-soft flex-1 bg-gray-100 text-gray-600 px-6 py-4 text-xl">
+                Home
+              </button>
+            ) : (
+              <BigButton onClick={() => go({ name: "kid", kidId: kid.id })} color={def.color} className="flex-1">
+                {mastered ? "Next! 🚀" : "Home"}
+              </BigButton>
+            )}
           </div>
         </div>
       </Screen>
@@ -418,25 +440,25 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
       <div className="max-w-2xl mx-auto">
         {/* top bar */}
         <div className="flex items-center gap-2 pt-2">
-          <button onClick={() => go({ name: "kid", kidId: kid.id })} className="text-2xl p-1 active:scale-90">✖️</button>
+          <button onClick={() => go({ name: "kid", kidId: kid.id })} className="w-11 h-11 rounded-2xl bg-white/90 text-xl btn-soft shrink-0">✖️</button>
           <div className="flex-1">
-            <div className="h-4 bg-white/60 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progressPct}%`, background: def.color }} />
+            <div className="h-5 bg-white/70 rounded-full overflow-hidden border-2 border-white">
+              <div className="h-full rounded-full transition-all duration-500 bar-shine" style={{ width: `${Math.max(progressPct, 4)}%`, background: def.color }} />
             </div>
           </div>
           {interactive && (
             <button
               onClick={() => setShowLesson(true)}
-              className="font-bold text-sm px-3 py-1 rounded-full bg-white/70"
+              className="font-extrabold text-sm px-3 py-2 rounded-2xl bg-white/90 btn-soft"
               style={{ color: def.color }}
             >
               🎓 Teach me
             </button>
           )}
-          <button onClick={toggleMute} className="text-lg p-1.5 rounded-full bg-white/70 active:scale-90">
+          <button onClick={toggleMute} className="w-11 h-11 rounded-2xl bg-white/90 text-lg btn-soft shrink-0">
             {muted ? "🔇" : "🔊"}
           </button>
-          <div className="font-bold text-sm px-3 py-1 rounded-full bg-white/70" style={{ color: def.color }}>
+          <div className="font-extrabold text-sm px-3 py-2 rounded-2xl bg-white/90" style={{ color: def.color }}>
             {mins}:{secs.toString().padStart(2, "0")}
           </div>
         </div>
@@ -447,23 +469,32 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
 
         {/* mission track (math) or unit label */}
         {isMathGame && mode !== "placement" ? (
-          <div className="card mt-3 px-4 py-3">
-            <div className="flex items-center justify-between text-xs font-extrabold" style={{ color: def.color }}>
-              <span>{theme.title} · {round.unitLabel}</span>
-              <span className="text-amber-500">⚡ ×{fastCount}</span>
+          <div className="card mt-3 px-5 py-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-black text-base" style={{ color: def.color }}>{theme.title}</span>
+              <span className="font-black text-base px-3 py-1 rounded-2xl bg-amber-100 text-amber-600">⚡ {fastCount}</span>
             </div>
-            <div className="relative h-10 mt-1">
-              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 rounded-full bg-gray-100" />
-              <div className="absolute top-1/2 -translate-y-1/2 h-2 rounded-full transition-all duration-500" style={{ width: `${missionPct}%`, background: def.color, opacity: 0.3 }} />
-              <div className="absolute top-1/2 -translate-y-1/2 text-2xl transition-all duration-500" style={{ left: `calc(${Math.min(missionPct, 92)}% )` }}>
+            <div className="relative h-14">
+              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-4 rounded-full" style={{ background: def.soft }} />
+              <div className="absolute top-1/2 -translate-y-1/2 h-4 rounded-full transition-all duration-500" style={{ width: `${missionPct}%`, background: def.color, opacity: 0.45 }} />
+              {Array.from({ length: total }, (_, i) => (
+                <span key={i} className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full"
+                  style={{ left: `${(i / (total - 1)) * 92 + 4}%`, background: i < answeredRight ? def.color : "#fff", border: `2px solid ${def.color}55` }} />
+              ))}
+              <div className="absolute top-1/2 -translate-y-1/2 text-4xl transition-all duration-700" style={{ left: `calc(${Math.min(missionPct, 88)}%)` }}>
                 {theme.start}
               </div>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 text-2xl">{theme.goal}</div>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 text-4xl">{theme.goal}</div>
             </div>
           </div>
         ) : (
-          <div className="text-center mt-3 font-bold text-sm" style={{ color: def.color }}>
-            {def.emoji} {round.unitLabel} · Question {idx + 1} of {total}
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <span className="font-black text-base px-4 py-2 rounded-2xl bg-white/90" style={{ color: def.color }}>
+              {round.unitLabel}
+            </span>
+            <span className="font-black text-base px-3 py-2 rounded-2xl bg-white/70 text-gray-500">
+              {idx + 1}/{total}
+            </span>
           </div>
         )}
 
@@ -478,34 +509,33 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
         )}
 
         {/* question card */}
-        <div className="card p-6 mt-3 animate-pop" key={idx}>
-          {q!.visual && <div className="visual-block text-center text-4xl mb-4">{q!.visual}</div>}
-          <div className="flex items-center justify-center gap-2">
-            <div className="text-xl font-extrabold text-gray-800 text-center">{q!.prompt}</div>
+        <div className="card p-5 sm:p-6 mt-3 animate-pop" key={idx}>
+          {/* the coach asks the question */}
+          <div className="flex items-start gap-2" style={{ color: def.color }}>
+            <CoachCharacter subject={subject} size={92} mood={chosen === null ? "idle" : wrong ? "oops" : "happy"} />
             <button
               onClick={() => speak(q!.prompt, coach.voice)}
-              className="shrink-0 text-lg p-1.5 rounded-full active:scale-90"
-              style={{ background: def.soft }}
+              className="bubble flex-1 min-w-0 text-left p-4 mt-2 active:scale-[0.99] transition-transform"
+              style={{ background: def.soft, border: `4px solid ${def.color}22` }}
               title="Read it to me!"
             >
-              🔊
+              <div className="flex items-start gap-2">
+                <span className="text-[21px] sm:text-[23px] font-black text-gray-800 leading-snug flex-1">{q!.prompt}</span>
+                <span className="shrink-0 text-lg w-9 h-9 rounded-2xl bg-white/80 flex items-center justify-center">🔊</span>
+              </div>
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          {q!.visual && (
+            <div className="visual-block text-center text-[54px] leading-tight mt-4 mb-1 py-3 rounded-3xl" style={{ background: "#fafaff" }}>
+              {q!.visual}
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
             {q!.choices.map((c, i) => {
               const isAnswer = i === q!.answer;
               const isChosen = chosen === i;
-              let cls = "bg-gray-50 border-2 border-gray-200 text-gray-800";
-              if (chosen !== null) {
-                if (isAnswer) cls = "bg-green-100 border-2 border-green-500 text-green-800";
-                else if (isChosen) cls = "bg-red-100 border-2 border-red-400 text-red-700";
-                else cls = "bg-gray-50 border-2 border-gray-100 text-gray-400";
-              }
-              return (
-                <button key={i} onClick={() => choose(i)} className={`btn-big text-base py-4 ${cls} ${chosen === null ? "hover:border-violet-400" : ""}`}>
-                  {c}
-                </button>
-              );
+              const state = chosen === null ? "idle" : isAnswer ? "right" : isChosen ? "wrong" : "dim";
+              return <AnswerTile key={i} label={c} index={i} state={state} color={def.color} onClick={() => choose(i)} />;
             })}
           </div>
 
@@ -515,15 +545,15 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
               {wrong ? (
                 <div className="rounded-2xl p-4" style={{ background: def.soft }}>
                   <div className="flex items-start gap-3">
-                    <div className="text-4xl animate-wiggle">{coach.emoji}</div>
+                    <div style={{ color: def.color }}><CoachCharacter subject={subject} size={84} mood="oops" /></div>
                     <div className="flex-1">
-                      <div className="font-extrabold text-sm" style={{ color: def.color }}>{coach.name} says:</div>
-                      <div className="text-sm font-semibold text-gray-700 mt-0.5">{coachLine}</div>
+                      <div className="font-black text-sm uppercase tracking-wide" style={{ color: def.color }}>{coach.name} says:</div>
+                      <div className="text-[17px] font-bold text-gray-700 mt-0.5">{coachLine}</div>
                       {q!.steps ? (
                         <ol className="mt-2 space-y-1.5">
                           {q!.steps.map((s, i) => (
-                            <li key={i} className="flex gap-2 text-sm text-gray-700">
-                              <span className="shrink-0 w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center mt-0.5" style={{ background: def.color }}>
+                            <li key={i} className="flex gap-2.5 text-[16px] font-semibold text-gray-700">
+                              <span className="shrink-0 w-7 h-7 rounded-xl text-white text-sm font-black flex items-center justify-center" style={{ background: def.color }}>
                                 {i + 1}
                               </span>
                               <span>{s}</span>
@@ -537,8 +567,9 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
                   </div>
                 </div>
               ) : (
-                <div className="text-center">
-                  <div className="font-extrabold text-lg text-green-600">{coach.emoji} {coachLine}</div>
+                <div className="flex items-center justify-center gap-3">
+                  <div style={{ color: def.color }}><CoachCharacter subject={subject} size={76} mood="excited" /></div>
+                  <div className="font-black text-2xl text-green-600">{coachLine}</div>
                   {q!.explain && !isMathGame && <div className="text-sm text-gray-500 mt-1">💡 {q!.explain}</div>}
                 </div>
               )}
@@ -553,17 +584,25 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
                 </div>
               )}
 
-              <button onClick={next} className="btn-big mt-3 w-full text-white" style={{ background: def.color }}>
+              <BigButton onClick={next} color={def.color} className="mt-4 w-full">
                 {idx + 1 >= total ? (isMathGame && mode !== "placement" ? "Finish the mission! 🏁" : "See results ✨") : wrong ? "Got it — next! ➡️" : "Next ➡️"}
-              </button>
+              </BigButton>
             </div>
           )}
         </div>
 
         {/* running score — hidden for math (missions show the track instead) */}
-        {!isMathGame && (
-          <div className="text-center mt-4 text-sm font-bold text-gray-500">
-            {answers.filter(Boolean).length} ✅ · {answers.filter((a) => !a).length} ❌ · mastery needs {Math.round(MASTERY_PCT * 100)}%
+        {!isMathGame && answers.length > 0 && (
+          <div className="flex justify-center gap-1.5 mt-4">
+            {answers.map((a, i) => (
+              <span
+                key={i}
+                className="w-7 h-7 rounded-xl flex items-center justify-center text-sm font-black"
+                style={{ background: a ? "#dcfce7" : "#fee2e2", color: a ? "#16a34a" : "#ef4444" }}
+              >
+                {a ? "✓" : "✕"}
+              </span>
+            ))}
           </div>
         )}
       </div>
@@ -577,17 +616,17 @@ export default function SessionScreen({ kid, subject, mode, go }: Props) {
           <div className="font-extrabold text-xl text-gray-800 text-center mt-2">{buddy.name} calls a huddle!</div>
           <p className="text-gray-600 font-semibold text-center mt-2 text-sm leading-relaxed">{buddyMoment.line}</p>
           <div className="space-y-2.5 mt-5">
-            <button onClick={() => resolveIntervention("breathe")} className="btn-big w-full py-3 text-base bg-sky-100 text-sky-800">
+            <button onClick={() => resolveIntervention("breathe")} className="btn-soft w-full py-4 text-lg bg-sky-100 text-sky-800">
               {INTERVENE_CHOICES.breathe}
             </button>
             {interactive && (
-              <button onClick={() => resolveIntervention("reteach")} className="btn-big w-full py-3 text-base bg-amber-100 text-amber-800">
+              <button onClick={() => resolveIntervention("reteach")} className="btn-soft w-full py-4 text-lg bg-amber-100 text-amber-800">
                 {INTERVENE_CHOICES.reteach}
               </button>
             )}
-            <button onClick={() => resolveIntervention("push")} className="btn-big w-full py-3 text-base text-white" style={{ background: def.color }}>
+            <BigButton onClick={() => resolveIntervention("push")} color={def.color} className="w-full text-lg">
               {INTERVENE_CHOICES.push}
-            </button>
+            </BigButton>
           </div>
         </Overlay>
       )}
@@ -635,9 +674,9 @@ function BreatheOverlay({ buddy, color, onDone }: { buddy: Kid["buddy"] & object
         <BuddyAvatar buddy={buddy} size={80} mood="idle" />
       </div>
       {ready ? (
-        <button onClick={onDone} className="btn-big mt-6 text-white animate-pop" style={{ background: color }}>
+        <BigButton onClick={onDone} color={color} className="mt-6 animate-pop">
           I feel better — let's go! 💪
-        </button>
+        </BigButton>
       ) : (
         <div className="text-white/60 font-bold mt-6 text-sm">four big breaths…</div>
       )}
@@ -647,8 +686,8 @@ function BreatheOverlay({ buddy, color, onDone }: { buddy: Kid["buddy"] & object
 
 function Screen({ def, children }: { def: ReturnType<typeof subjectById>; children: ReactNode }) {
   return (
-    <div className="min-h-screen p-4 pb-12" style={{ background: `linear-gradient(160deg, ${def.soft}, #f5f3ff 60%)` }}>
+    <KidBg from={def.color} className="p-4 pb-12">
       {children}
-    </div>
+    </KidBg>
   );
 }

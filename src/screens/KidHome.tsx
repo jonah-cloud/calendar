@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { View } from "../App";
 import BuddyAvatar from "../components/BuddyAvatar";
+import CoachCharacter from "../components/CoachCharacter";
+import { KidBg } from "../components/Ui";
 import { buddyVoice } from "../lib/buddy";
 import { coachFor } from "../lib/coaches";
 import { SUBJECTS, subjectById } from "../lib/content";
@@ -20,7 +22,7 @@ const GREETINGS = [
 function Ring({ filled, color }: { filled: boolean; color: string }) {
   return (
     <div
-      className="w-9 h-9 rounded-full border-4 flex items-center justify-center text-sm font-bold transition-all"
+      className={`w-12 h-12 rounded-full border-[5px] flex items-center justify-center text-lg font-black transition-all ${filled ? "" : "glow-pulse"}`}
       style={{
         borderColor: color,
         background: filled ? color : "transparent",
@@ -52,13 +54,10 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
   }, []);
 
   return (
-    <div
-      className="min-h-screen p-5 pb-16"
-      style={{ background: `linear-gradient(160deg, ${kid.color}18, #f5f3ff 40%)` }}
-    >
+    <KidBg from={kid.color} className="p-5 pb-16">
       {/* header */}
       <div className="flex items-center justify-between max-w-3xl mx-auto">
-        <button onClick={() => go({ name: "picker" })} className="text-2xl p-2 active:scale-90">
+        <button onClick={() => go({ name: "picker" })} className="w-12 h-12 rounded-2xl bg-white/90 text-xl btn-soft shrink-0">
           ⬅️
         </button>
         <div className="flex items-center gap-3">
@@ -75,7 +74,7 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
             </div>
           )}
           <div>
-            <div className="font-extrabold text-xl text-gray-800">Hi, {kid.name}!</div>
+            <div className="font-black text-2xl text-gray-800">Hi, {kid.name}!</div>
             {kid.streak.count > 1 && (
               <div className="text-xs font-bold text-orange-500">🔥 {kid.streak.count}-day streak</div>
             )}
@@ -83,7 +82,8 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
         </div>
         <button
           onClick={() => go({ name: "store", kidId: kid.id })}
-          className="bg-amber-400 rounded-2xl px-4 py-2 font-extrabold text-amber-900 active:scale-95 shadow"
+          className="btn-chunky bg-amber-400 px-5 py-3 text-xl text-amber-900"
+          style={{ ["--btn-shadow" as string]: "#d97706" }}
         >
           ⚡ {kid.bucks}
         </button>
@@ -91,17 +91,17 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
 
       {/* rings */}
       <div className="card max-w-3xl mx-auto mt-5 p-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div className="font-extrabold text-gray-800 text-lg">
-              {allDone ? "🎉 School's done — go play!" : "Close your rings!"}
+            <div className="font-black text-gray-800 text-2xl">
+              {allDone ? "🎉 Done — go play!" : "Close your rings!"}
             </div>
-            <div className="text-sm text-gray-500">
-              {day.blocks}/{target} focus blocks · {Math.round(day.minutes)} min ·{" "}
-              ⚡{day.bucksEarned} earned today
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <span className="text-sm font-black px-3 py-1.5 rounded-2xl bg-violet-100 text-violet-700">⏱️ {Math.round(day.minutes)} min</span>
+              <span className="text-sm font-black px-3 py-1.5 rounded-2xl bg-amber-100 text-amber-700">⚡ {day.bucksEarned} today</span>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2.5">
             {Array.from({ length: target }, (_, i) => (
               <Ring key={i} filled={i < day.blocks} color={kid.color} />
             ))}
@@ -113,31 +113,31 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
       {!kid.buddy && (
         <button
           onClick={() => go({ name: "buddy", kidId: kid.id })}
-          className="card max-w-3xl mx-auto mt-4 p-4 w-full flex items-center justify-between active:scale-[0.98] block"
-          style={{ border: "3px dashed #a78bfa" }}
+          className="card max-w-3xl mx-auto mt-4 p-5 w-full flex items-center justify-between btn-soft block"
+          style={{ border: "4px dashed #a78bfa" }}
         >
           <div className="text-left">
-            <div className="font-extrabold text-violet-700 text-lg">🛠️ Build your buddy!</div>
-            <div className="text-sm text-gray-500">
-              Create your very own coach — they'll talk to you and cheer you on!
+            <div className="font-black text-violet-700 text-xl">🛠️ Build your buddy!</div>
+            <div className="text-sm font-semibold text-gray-500">
+              Make your very own coach — they talk and cheer you on!
             </div>
           </div>
-          <span className="text-4xl">🧸</span>
+          <span className="text-5xl">🧸</span>
         </button>
       )}
 
       {/* review nudge */}
       {reviewsDue > 0 && (
-        <div className="max-w-3xl mx-auto mt-4 bg-sky-100 border-2 border-sky-300 rounded-3xl p-4 flex items-center justify-between">
-          <div className="font-bold text-sky-800">
-            🔁 {reviewsDue} skill{reviewsDue > 1 ? "s" : ""} ready for review — keep them strong!
+        <div className="max-w-3xl mx-auto mt-4 bg-sky-100 border-4 border-sky-200 rounded-[26px] p-4">
+          <div className="font-black text-sky-800 text-lg">
+            🔁 {reviewsDue} skill{reviewsDue > 1 ? "s" : ""} ready for review!
           </div>
         </div>
       )}
 
       {/* today's plan */}
       <div className="max-w-3xl mx-auto mt-6">
-        <h2 className="font-extrabold text-gray-700 text-lg mb-3">Today's 2-Hour Plan</h2>
+        <h2 className="font-black text-gray-700 text-2xl mb-3">Today's Plan</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {SUBJECTS.map((s) => {
             const prog = kid.subjects[s.id];
@@ -146,28 +146,25 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
             const due = dueReviews(kid, s.id).length;
             const lvl = s.levels[prog.level - 1];
             return (
-              <div key={s.id} className="card p-4" style={{ borderTop: `6px solid ${s.color}` }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl">{coachFor(s.id).emoji}</span>
-                    <div>
-                      <div className="font-extrabold text-gray-800">
-                        {s.name} <span className="text-xs font-bold text-gray-400">with {coachFor(s.id).name}</span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Level {prog.level} · {lvl?.name}
-                      </div>
+              <div key={s.id} className="card p-4 relative overflow-hidden" style={{ borderTop: `8px solid ${s.color}` }}>
+                {inPlan && !allDone && (
+                  <span className="absolute top-3 right-3 text-[11px] font-black px-2.5 py-1 rounded-xl" style={{ background: s.soft, color: s.color }}>
+                    TODAY
+                  </span>
+                )}
+                <div className="flex items-center gap-2">
+                  <div style={{ color: s.color }}><CoachCharacter subject={s.id} size={72} /></div>
+                  <div className="min-w-0">
+                    <div className="font-black text-gray-800 text-xl leading-tight">{s.name}</div>
+                    <div className="text-xs font-bold" style={{ color: s.color }}>with {coachFor(s.id).name}</div>
+                    <div className="mt-1 inline-block text-[11px] font-black px-2 py-0.5 rounded-lg" style={{ background: s.soft, color: s.color }}>
+                      LEVEL {prog.level}
                     </div>
                   </div>
-                  {inPlan && !allDone && (
-                    <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: s.soft, color: s.color }}>
-                      TODAY
-                    </span>
-                  )}
                 </div>
-                <div className="text-sm text-gray-600 mt-2 min-h-[20px]">
+                <div className="text-sm font-bold text-gray-600 mt-2 min-h-[20px]">
                   {!prog.placed
-                    ? "🧭 First: a quick placement adventure!"
+                    ? "🧭 First: find your level!"
                     : next
                       ? `Next: ${next.unit.emoji} ${next.unit.title}`
                       : "🏆 Top level mastered!"}
@@ -176,8 +173,8 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
                   {!prog.placed ? (
                     <button
                       onClick={() => go({ name: "session", kidId: kid.id, subject: s.id, mode: "placement" })}
-                      className="flex-1 btn-big py-2.5 text-base text-white"
-                      style={{ background: s.color }}
+                      className="flex-1 btn-chunky py-3 text-base"
+                      style={{ background: s.color, ["--btn-shadow" as string]: s.color + "aa" }}
                     >
                       Find my level
                     </button>
@@ -185,15 +182,15 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
                     <>
                       <button
                         onClick={() => go({ name: "session", kidId: kid.id, subject: s.id, mode: "learn" })}
-                        className="flex-1 btn-big py-2.5 text-base text-white"
-                        style={{ background: s.color }}
+                        className="flex-1 btn-chunky py-3 text-base"
+                        style={{ background: s.color, ["--btn-shadow" as string]: s.color + "aa" }}
                       >
-                        {s.id === "math" ? "Mission! 🐆" : "Learn ▶"}
+                        {s.id === "math" ? "Mission! 🚀" : "Learn ▶"}
                       </button>
                       {due > 0 && (
                         <button
                           onClick={() => go({ name: "session", kidId: kid.id, subject: s.id, mode: "review" })}
-                          className="btn-big py-2.5 text-base"
+                          className="btn-soft py-3 px-4 text-base"
                           style={{ background: s.soft, color: s.color }}
                         >
                           🔁 {due}
@@ -203,7 +200,7 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
                   )}
                   <button
                     onClick={() => go({ name: "map", kidId: kid.id, subject: s.id })}
-                    className="btn-big py-2.5 text-base bg-gray-100 text-gray-500"
+                    className="btn-soft py-3 px-4 text-base bg-gray-100 text-gray-500"
                   >
                     🗺️
                   </button>
@@ -218,17 +215,17 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
       <div className="max-w-3xl mx-auto mt-6">
         <button
           onClick={() => go({ name: "workshops", kidId: kid.id })}
-          className="card w-full p-5 flex items-center justify-between active:scale-[0.98]"
+          className="card w-full p-5 flex items-center justify-between btn-soft"
         >
           <div className="text-left">
-            <div className="font-extrabold text-gray-800 text-lg">🏕️ Afternoon Workshops</div>
-            <div className="text-sm text-gray-500">
-              Life-skill quests: lemonade stands, TED talks, kindness missions…
+            <div className="font-black text-gray-800 text-xl">🏕️ Afternoon Quests</div>
+            <div className="text-sm font-semibold text-gray-500">
+              Lemonade stands, TED talks, kindness missions…
             </div>
           </div>
-          <span className="text-3xl">➡️</span>
+          <span className="text-4xl">➡️</span>
         </button>
       </div>
-    </div>
+    </KidBg>
   );
 }

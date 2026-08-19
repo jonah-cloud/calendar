@@ -1,4 +1,5 @@
 import type { SubjectId } from "./types";
+import type { VoiceStyle } from "./speech";
 import { pick } from "./rand";
 
 export interface Coach {
@@ -6,7 +7,7 @@ export interface Coach {
   emoji: string;
   title: string;
   /** Voice character for the speech engine. */
-  voice: { pitch: number; rate: number };
+  voice: VoiceStyle;
   /** Funny lines that open a wrong-answer walkthrough. */
   oops: string[];
   /** Praise for correct answers. */
@@ -22,7 +23,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Dash",
     emoji: "🐆",
     title: "Dash the Cheetah · Math Mission Chief",
-    voice: { pitch: 1.35, rate: 1.12 },
+    voice: { pitch: 1.22, rate: 1.14, timbre: "bright" },
     oops: [
       "WHOA, speed bump! Even cheetahs trip on their shoelaces. (I don't wear shoes. Long story.) Watch this:",
       "Eek — wrong turn! Happens to me when I'm thinking about snacks. Let me show you the fast lane:",
@@ -45,7 +46,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Olive",
     emoji: "🦉",
     title: "Olive the Owl · Head Book-Whooo-rarian",
-    voice: { pitch: 0.85, rate: 0.9 },
+    voice: { pitch: 0.94, rate: 0.9, timbre: "gentle" },
     oops: [
       "Whooo, not quite! Don't worry — I once read a whole book upside down. Here's the secret:",
       "Hmm-hoo! My feathers are ruffled — that word is a tricky one. Let me shine my book-light on it:",
@@ -61,7 +62,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Lola",
     emoji: "🦜",
     title: "Lola the Parrot · Directora of Dramatic Spanish",
-    voice: { pitch: 1.45, rate: 1.0 },
+    voice: { pitch: 1.3, rate: 1.03, timbre: "silly" },
     oops: [
       "¡Ay, no no no! *dramatic feather flip* — it's okay mi amor, even I once said 'gato' to a dog. Listen:",
       "¡Uy! Wrong word, right heart. Lola will fix it. Repeat after me, TWICE, because I always say it twice:",
@@ -77,7 +78,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Meowzart",
     emoji: "🐱",
     title: "Meowzart · World-Famous Composer Cat",
-    voice: { pitch: 1.15, rate: 0.92 },
+    voice: { pitch: 1.12, rate: 0.95, timbre: "warm" },
     oops: [
       "Meow-NO! *dramatic piano slam* …forgive me, I am an ARTIST. Now, listen closely, my student:",
       "Hisss — that note was flat! Even my ninth symphony had a wrong meow in it. Observe:",
@@ -93,7 +94,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Newton",
     emoji: "🦝",
     title: "Newton the Raccoon · Chief of Messy Experiments",
-    voice: { pitch: 1.0, rate: 1.08 },
+    voice: { pitch: 1.05, rate: 1.08, timbre: "crisp" },
     oops: [
       "KABOOM — wrong beaker! No worries, 90% of my experiments explode too. Here's what ACTUALLY happens:",
       "Hmm, my trash-panda senses say nope! Let's dig through the facts together (I love digging):",
@@ -109,7 +110,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Barnaby",
     emoji: "🐢",
     title: "Barnaby the Tortoise · 512-Year-Old History Keeper",
-    voice: { pitch: 0.8, rate: 0.85 },
+    voice: { pitch: 0.8, rate: 0.87, timbre: "deep" },
     oops: [
       "Hmm, not quite, young sprout. And I should know — I was THERE. (I was napping, but I was there.) Let me tell you how it really went:",
       "Ah ah ah, hold your horses! And I've held actual horses. The true story goes like this:",
@@ -125,7 +126,7 @@ export const COACHES: Record<SubjectId, Coach> = {
     name: "Amelia",
     emoji: "🪿",
     title: "Amelia the Goose · Round-the-World Navigator",
-    voice: { pitch: 1.25, rate: 1.0 },
+    voice: { pitch: 1.18, rate: 1.0, timbre: "young" },
     oops: [
       "HONK — wrong turn! Happens to the best of us. I once flew to the wrong continent. (Don't tell the flock.) Here's the route:",
       "Whoopsie, that's off the map! Lucky for you I've flown over this EXACT spot. Wings up, look here:",

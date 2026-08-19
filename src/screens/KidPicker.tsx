@@ -8,10 +8,17 @@ export default function KidPicker({ go }: { go: (v: View) => void }) {
   const today = todayISO();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-400 flex flex-col items-center justify-center p-6">
-      <div className="text-7xl mb-2">⚡</div>
-      <h1 className="text-4xl font-extrabold text-white drop-shadow mb-1">Spark Academy</h1>
-      <p className="text-white/80 mb-8 font-medium">Who's learning today?</p>
+    <div className="min-h-screen bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-400 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {[
+        { s: 260, t: "-8%", l: "-10%" },
+        { s: 200, t: "70%", l: "80%" },
+        { s: 150, t: "12%", l: "84%" },
+      ].map((b, i) => (
+        <span key={i} className="blob" style={{ width: b.s, height: b.s, top: b.t, left: b.l, background: "#fff", opacity: 0.15, animationDelay: `${i}s` }} />
+      ))}
+      <div className="text-8xl mb-1 animate-pop">⚡</div>
+      <h1 className="text-5xl font-black text-white drop-shadow-lg mb-1">Spark Academy</h1>
+      <p className="text-white/90 mb-8 font-bold text-lg">Who's learning today?</p>
       <div className="flex flex-wrap justify-center gap-6 max-w-2xl">
         {state.kids.map((kid) => {
           const day = kid.days[today];
@@ -20,7 +27,7 @@ export default function KidPicker({ go }: { go: (v: View) => void }) {
             <button
               key={kid.id}
               onClick={() => go({ name: "kid", kidId: kid.id })}
-              className="card w-44 p-6 flex flex-col items-center active:scale-95 transition-transform animate-pop"
+              className="card-pop w-48 p-6 flex flex-col items-center btn-soft animate-pop"
             >
               {kid.buddy ? (
                 <div className="mb-2">
@@ -34,11 +41,14 @@ export default function KidPicker({ go }: { go: (v: View) => void }) {
                   {kid.emoji}
                 </div>
               )}
-              <div className="font-extrabold text-xl text-gray-800">{kid.name}</div>
-              <div className="text-sm text-gray-500 mt-1">
-                {done >= state.settings.blocksPerDay
-                  ? "✅ Done today!"
-                  : `${done}/${state.settings.blocksPerDay} blocks`}
+              <div className="font-black text-2xl text-gray-800">{kid.name}</div>
+              <div className="flex gap-1 mt-2">
+                {Array.from({ length: state.settings.blocksPerDay }, (_, i) => (
+                  <span key={i} className="w-3.5 h-3.5 rounded-full" style={{ background: i < done ? kid.color : kid.color + "33" }} />
+                ))}
+              </div>
+              <div className="text-sm font-bold text-gray-400 mt-1">
+                {done >= state.settings.blocksPerDay ? "✅ All done!" : `${done}/${state.settings.blocksPerDay} blocks`}
               </div>
               {kid.streak.count > 1 && (
                 <div className="text-xs mt-1 font-bold text-orange-500">🔥 {kid.streak.count}-day streak</div>
@@ -49,7 +59,7 @@ export default function KidPicker({ go }: { go: (v: View) => void }) {
       </div>
       <button
         onClick={() => go({ name: "guide" })}
-        className="mt-10 text-white/90 font-semibold bg-white/20 rounded-2xl px-6 py-3 backdrop-blur active:scale-95"
+        className="mt-10 text-white font-black bg-white/25 rounded-2xl px-6 py-4 backdrop-blur btn-soft text-lg"
       >
         🧭 Guide Dashboard (grown-ups)
       </button>
