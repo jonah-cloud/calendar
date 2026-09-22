@@ -674,3 +674,32 @@ export const MATH_LEVELS: LevelDef[] = [
     ],
   },
 ];
+
+/**
+ * Every generator, addressable by id — so the course-book track can compose
+ * lessons out of the same question engines the speed missions use.
+ */
+export const MATH_GENERATORS: Record<string, (d: number) => Question> = {
+  counting: countingQ,
+  compare: compareQ,
+  add5: addTo5,
+  shapes: () => shapesQ(),
+  addsub20: addSub20,
+  missing: missingNum,
+  tensones: tensOnes,
+  skip: skipCount,
+  addsub100: addSub100,
+  money: moneyQ,
+  time: clockQ,
+  mult: multFacts,
+  div: divFacts,
+  arrays: arraysQ,
+  bigmult: multiDigitMult,
+  longdiv: longDiv,
+  fraccomp: fracCompare,
+  equiv: equivFrac,
+  fracadd: fracAdd,
+  decimals: decimalsQ,
+  orderops: orderOps,
+  perim: perimeterArea,
+};

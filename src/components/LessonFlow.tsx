@@ -4,6 +4,7 @@ import type { IStep } from "../lib/content/mathInteractive";
 import { pick as randPick, staticQ } from "../lib/rand";
 import { isMuted, setMuted, speak, speakLines, stopSpeaking } from "../lib/speech";
 import CoachCharacter, { useSpeaking } from "./CoachCharacter";
+import MathViz from "./MathViz";
 import { AnswerTile, BigButton, Confetti, KidBg } from "./Ui";
 
 import type { Question, SubjectDef, UnitDef } from "../lib/types";
@@ -130,8 +131,94 @@ function CoachBubble({ coach, def, text }: { coach: Coach; def: SubjectDef; text
 
 /* ---------------- explore steps ---------------- */
 
+/**
+ * The BIG IDEA card. Every concept lesson opens with one of these: name the
+ * idea, say it in one plain sentence, show it as a picture, and pin the
+ * takeaway. Nothing to do but look and listen — understanding comes first,
+ * activity second.
+ */
+function ConceptStep({
+  step,
+  coach,
+  def,
+  onDone,
+}: {
+  step: Extract<IStep, { kind: "concept" }>;
+  coach: Coach;
+  def: SubjectDef;
+  onDone: () => void;
+}) {
+  const talking = useSpeaking();
+  const line = step.say ?? step.big;
+  useEffect(() => {
+    speak(line, coach.voice);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line]);
+
+  return (
+    <div className="mt-6 animate-pop">
+      <div className="card overflow-hidden" style={{ border: `4px solid ${def.color}33` }}>
+        {/* ribbon */}
+        <div
+          className="px-5 py-2 flex items-center gap-2 text-white font-black text-xs uppercase tracking-widest"
+          style={{ background: def.color }}
+        >
+          <span className="text-base">💡</span> New idea
+        </div>
+
+        <div className="p-5">
+          <h2 className="font-black text-2xl sm:text-3xl text-gray-800 leading-tight">{step.title}</h2>
+
+          {/* Dash says the idea out loud */}
+          <button
+            onClick={() => speak(line, coach.voice)}
+            className="mt-3 w-full flex items-start gap-2 text-left active:scale-[0.99] transition-transform"
+          >
+            <CoachCharacter subject={def.id} size={92} mood="idle" />
+            <div
+              className="bubble flex-1 min-w-0 p-4 mt-2"
+              style={{ background: def.soft, border: `3px solid ${def.color}33` }}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="font-black text-xs uppercase tracking-wide" style={{ color: def.color }}>
+                  {coach.name}
+                </span>
+                <span className="text-xs">{talking ? "🔊" : "👆 tap to replay"}</span>
+              </div>
+              <div className="font-bold text-gray-700 leading-snug text-[17px]">{step.big}</div>
+            </div>
+          </button>
+
+          {/* the picture that makes it obvious */}
+          {step.viz && (
+            <div
+              className="mt-4 rounded-3xl p-4"
+              style={{ background: "#fff", border: `3px dashed ${def.color}44` }}
+            >
+              <MathViz viz={step.viz} color={def.color} soft={def.soft} />
+            </div>
+          )}
+
+          {step.takeaway && (
+            <div
+              className="mt-4 rounded-2xl px-4 py-3 font-black text-center text-[17px] leading-snug"
+              style={{ background: def.soft, color: def.color }}
+            >
+              ⭐ {step.takeaway}
+            </div>
+          )}
+        </div>
+      </div>
+      <DoneBanner def={def} onDone={onDone} label="Got it — let's try it! 👉" />
+    </div>
+  );
+}
+
+
 function ExploreStep({ step, coach, def, onDone }: { step: IStep; coach: Coach; def: SubjectDef; onDone: () => void }) {
   switch (step.kind) {
+    case "concept":
+      return <ConceptStep step={step} coach={coach} def={def} onDone={onDone} />;
     case "say":
       return (
         <div className="mt-6 animate-pop">
@@ -428,7 +515,19 @@ function PickStep({ step, coach, def, onDone }: { step: Extract<IStep, { kind: "
     <div className="mt-6 animate-pop">
       <CoachBubble coach={coach} def={def} text={step.text} />
       <div className="card p-6 mt-4 text-center">
+        {/* the maths stays ON SCREEN while they answer — never a naked question */}
+        {step.viz && (
+          <div
+            className="rounded-3xl p-3 mb-4"
+            style={{ background: def.soft, border: `3px solid ${def.color}22` }}
+          >
+            <MathViz viz={step.viz} color={def.color} soft={def.soft} />
+          </div>
+        )}
         {step.visual && <div className="visual-block text-4xl mb-4">{step.visual}</div>}
+        {step.ask && (
+          <div className="font-black text-3xl sm:text-4xl text-gray-800 mb-4 tracking-tight">{step.ask}</div>
+        )}
         <div className={`grid gap-3 ${step.tiles.length > 2 ? "sm:grid-cols-2 grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
           {step.tiles.map((t, i) => (
             <AnswerTile
