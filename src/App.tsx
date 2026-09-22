@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "./lib/store";
-import type { SubjectId } from "./lib/types";
+import type { CourseBookId, SubjectId } from "./lib/types";
 import Onboarding from "./screens/Onboarding";
 import KidPicker from "./screens/KidPicker";
 import KidHome from "./screens/KidHome";
@@ -10,12 +10,16 @@ import RewardsStore from "./screens/RewardsStore";
 import WorkshopsScreen from "./screens/WorkshopsScreen";
 import GuideDashboard from "./screens/GuideDashboard";
 import BuddyBuilder from "./screens/BuddyBuilder";
+import LessonMap from "./screens/LessonMap";
+import CourseLessonScreen from "./screens/CourseLessonScreen";
 
 export type View =
   | { name: "picker" }
   | { name: "kid"; kidId: string }
   | { name: "session"; kidId: string; subject: SubjectId; mode: "learn" | "review" | "placement" }
   | { name: "map"; kidId: string; subject: SubjectId }
+  | { name: "course"; kidId: string }
+  | { name: "courseLesson"; kidId: string; book: CourseBookId; lesson: number }
   | { name: "store"; kidId: string }
   | { name: "workshops"; kidId: string }
   | { name: "buddy"; kidId: string }
@@ -43,6 +47,10 @@ export default function App() {
       return <SessionScreen kid={kid!} subject={view.subject} mode={view.mode} go={setView} />;
     case "map":
       return <MasteryMap kid={kid!} subject={view.subject} go={setView} />;
+    case "course":
+      return <LessonMap kid={kid!} go={setView} />;
+    case "courseLesson":
+      return <CourseLessonScreen kid={kid!} book={view.book} lesson={view.lesson} go={setView} />;
     case "store":
       return <RewardsStore kid={kid!} go={setView} />;
     case "workshops":

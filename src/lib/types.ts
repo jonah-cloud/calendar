@@ -107,6 +107,20 @@ export interface BuddyConfig {
   voice: string;
 }
 
+/** The Good & Beautiful course-book track — five books, walked in order. */
+export type CourseBookId = "math1" | "math2" | "math3" | "math4" | "math5";
+
+export interface CourseProgress {
+  /** the book they are working in right now */
+  book: CourseBookId;
+  /** the lesson they are ON (1-based) — this is what the map highlights */
+  lesson: number;
+  /** completed lessons, as "math1:14" keys, across every book */
+  done: string[];
+  /** has the placement check run for this track */
+  placed: boolean;
+}
+
 export interface DayLog {
   blocks: number; // completed focus blocks today
   masteredBlocks: number; // blocks completed at >=90%
@@ -146,6 +160,8 @@ export interface Kid {
   ledger: LedgerEntry[];
   streak: { count: number; last: string };
   subjects: Record<SubjectId, SubjectProgress>;
+  /** course-book math track (optional: set after the placement check) */
+  course?: CourseProgress;
   days: Record<string, DayLog>;
   redemptions: Redemption[];
   workshops: WorkshopDone[];

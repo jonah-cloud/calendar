@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useReducer } from "react";
-import type { AppState, Kid, Redemption, Reward, RoundResult, SubjectId } from "./types";
+import type { AppState, CourseBookId, Kid, Redemption, Reward, RoundResult, SubjectId } from "./types";
 import { migrateBuddy } from "./buddy";
 import { SUBJECTS } from "./content";
 import { addDays, todayISO, uid } from "./rand";
@@ -86,6 +86,9 @@ export type Action =
   | { type: "SET_PLACED"; kidId: string; subject: SubjectId; level: number }
   | { type: "LESSON_DONE"; kidId: string; subject: SubjectId; unitKey: string }
   | { type: "SET_BUDDY"; kidId: string; buddy: NonNullable<Kid["buddy"]> }
+  | { type: "COURSE_PLACE"; kidId: string; book: CourseBookId; lesson: number }
+  | { type: "COURSE_GOTO"; kidId: string; book: CourseBookId; lesson: number }
+  | { type: "COURSE_LESSON_DONE"; kidId: string; book: CourseBookId; lesson: number }
   | {
       type: "ROUND_DONE";
       kidId: string;
@@ -169,6 +172,44 @@ function reducer(state: AppState, action: Action): AppState {
       });
     case "SET_BUDDY":
       return updateKid(state, action.kidId, (k) => ({ ...k, buddy: action.buddy }));
+    case "COURSE_PLACE":
+      return updateKid(state, action.kidId, (k) => ({
+        ...k,
+        course: {
+          book: action.book,
+          lesson: action.lesson,
+          // everything before the placement lesson counts as already known
+          done: k.course?.done ?? [],
+          placed: true,
+        },
+      }));
+    case "COURSE_GOTO":
+      return updateKid(state, action.kidId, (k) => ({
+        ...k,
+        course: {
+          book: action.book,
+          lesson: action.lesson,
+          done: k.course?.done ?? [],
+          placed: k.course?.placed ?? false,
+        },
+      }));
+    case "COURSE_LESSON_DONE":
+      return updateKid(state, action.kidId, (k) => {
+        const key = `${action.book}:${action.lesson}`;
+        const done = k.course?.done ?? [];
+        return {
+          ...k,
+          course: {
+            book: action.book,
+            // only advance if they finished the lesson they were on; replaying
+            // an earlier lesson must not drag them backwards
+            lesson:
+              action.lesson >= (k.course?.lesson ?? 1) ? action.lesson + 1 : k.course?.lesson ?? 1,
+            done: done.includes(key) ? done : [...done, key],
+            placed: k.course?.placed ?? true,
+          },
+        };
+      });
     case "ROUND_DONE": {
       return updateKid(state, action.kidId, (kid) => {
         const prog = kid.subjects[action.subject];

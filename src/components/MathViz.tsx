@@ -29,6 +29,18 @@ export default function MathViz({ viz, color, soft }: { viz: Viz; color: string;
       return <ClockViz viz={viz} color={color} />;
     case "expr":
       return <ExprViz viz={viz} color={color} soft={soft} />;
+    case "angle":
+      return <AngleViz viz={viz} color={color} soft={soft} />;
+    case "coord":
+      return <CoordViz viz={viz} color={color} />;
+    case "solid":
+      return <SolidViz viz={viz} color={color} soft={soft} />;
+    case "circle":
+      return <CircleViz viz={viz} color={color} soft={soft} />;
+    case "decgrid":
+      return <DecGridViz viz={viz} color={color} soft={soft} />;
+    case "negline":
+      return <NegLineViz viz={viz} color={color} />;
   }
 }
 
@@ -265,12 +277,26 @@ function GroupsViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "groups" }>
   );
 }
 
-/* -------- split a big number into tens and ones -------- */
+/* -------- split a big number into tens and ones --------
+ *
+ * The two operations split differently, and getting this wrong teaches a
+ * falsehood:
+ *   ×  splits ONE number and multiplies each piece by the whole other one
+ *      (23 × 4 = 20×4 + 3×4) — that's the distributive property.
+ *   +/− splits BOTH numbers and pairs them up place by place
+ *      (34 + 25 = 30+20 and 4+5). Adding the whole of b to each piece of a
+ *      would count b twice.
+ */
 function SplitViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "split" }>; color: string; soft: string }) {
   const t = Math.floor(viz.a / 10) * 10;
   const o = viz.a % 10;
   const sym = viz.op === "x" ? "×" : viz.op;
-  const partA = viz.op === "+" ? t + viz.b : viz.op === "-" ? t - viz.b : t * viz.b;
+  const mult = viz.op === "x";
+  // what the other number contributes to each half
+  const bT = mult ? viz.b : Math.floor(viz.b / 10) * 10;
+  const bO = mult ? viz.b : viz.b % 10;
+  const tensResult = mult ? t * viz.b : viz.op === "+" ? t + bT : t - bT;
+  const onesResult = mult ? o * viz.b : viz.op === "+" ? o + bO : o - bO;
   return (
     <Box>
       <div className="text-3xl font-black" style={{ color }}>
@@ -279,12 +305,16 @@ function SplitViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "split" }>; 
       <div className="text-2xl">⬇️</div>
       <div className="flex items-center justify-center gap-2 flex-wrap">
         <div className="rounded-2xl px-4 py-2 font-black text-xl" style={{ background: soft, color }}>
-          {t} {sym} {viz.b} = {partA}
+          {t} {sym} {bT} = {tensResult}
         </div>
         <span className="text-2xl font-black text-gray-400">and</span>
         <div className="rounded-2xl px-4 py-2 font-black text-xl" style={{ background: "#fef3c7", color: "#b45309" }}>
-          {o} {sym} {viz.b} = {viz.op === "x" ? o * viz.b : o}
+          {o} {sym} {bO} = {onesResult}
         </div>
+      </div>
+      <div className="text-lg font-black text-gray-500">
+        {tensResult} {mult ? "+" : "and"} {onesResult} makes{" "}
+        <span style={{ color }}>{mult ? tensResult + onesResult : tensResult + onesResult}</span>
       </div>
     </Box>
   );
@@ -432,6 +462,237 @@ function ExprViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "expr" }>; co
             {p.text}
           </span>
         ))}
+      </div>
+    </Box>
+  );
+}
+
+/* ================= the higher course books ================= */
+
+/* -------- an angle drawn to scale, with its degrees -------- */
+function AngleViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "angle" }>; color: string; soft: string }) {
+  const R = 74;
+  const cx = 92;
+  const cy = 96;
+  // 0° points right; angles open counter-clockwise like a protractor
+  const rad = (viz.deg * Math.PI) / 180;
+  const x2 = cx + R * Math.cos(-rad);
+  const y2 = cy + R * Math.sin(-rad);
+  const arcR = 30;
+  const large = viz.deg > 180 ? 1 : 0;
+  const ax = cx + arcR * Math.cos(-rad);
+  const ay = cy + arcR * Math.sin(-rad);
+  const kind = viz.deg === 90 ? "right" : viz.deg < 90 ? "acute" : viz.deg < 180 ? "obtuse" : "reflex";
+  return (
+    <Box>
+      <svg width="190" height="120" viewBox="0 0 190 120">
+        {/* the wedge */}
+        <path
+          d={`M ${cx} ${cy} L ${cx + arcR} ${cy} A ${arcR} ${arcR} 0 ${large} 0 ${ax} ${ay} Z`}
+          fill={color}
+          opacity="0.18"
+        />
+        <path
+          d={`M ${cx + arcR} ${cy} A ${arcR} ${arcR} 0 ${large} 0 ${ax} ${ay}`}
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+        />
+        {/* the two rays */}
+        <line x1={cx} y1={cy} x2={cx + R} y2={cy} stroke={color} strokeWidth="5" strokeLinecap="round" />
+        <line x1={cx} y1={cy} x2={x2} y2={y2} stroke={color} strokeWidth="5" strokeLinecap="round" />
+        <circle cx={cx} cy={cy} r="5" fill={color} />
+        {/* the little square that marks a right angle */}
+        {viz.deg === 90 && (
+          <rect x={cx + 3} y={cy - 19} width="16" height="16" fill="none" stroke={color} strokeWidth="3" />
+        )}
+        <text x={cx + 40} y={cy - 12} fontSize="17" fontWeight="900" fill={color}>
+          {viz.deg}°
+        </text>
+      </svg>
+      <div className="font-black text-lg" style={{ color }}>
+        {viz.label ?? `${kind} angle`}
+      </div>
+    </Box>
+  );
+}
+
+/* -------- coordinate grid with plotted points -------- */
+function CoordViz({ viz, color }: { viz: Extract<Viz, { kind: "coord" }>; color: string }) {
+  const n = viz.size ?? 6;
+  const cell = 30;
+  const pad = 26;
+  const W = pad + n * cell + 12;
+  const px = (x: number) => pad + x * cell;
+  const py = (y: number) => pad + (n - y) * cell;
+  return (
+    <Box>
+      <svg width={W} height={W} viewBox={`0 0 ${W} ${W}`}>
+        {Array.from({ length: n + 1 }, (_, i) => (
+          <g key={i}>
+            <line x1={px(0)} y1={py(i)} x2={px(n)} y2={py(i)} stroke="#e5e7eb" strokeWidth="2" />
+            <line x1={px(i)} y1={py(0)} x2={px(i)} y2={py(n)} stroke="#e5e7eb" strokeWidth="2" />
+          </g>
+        ))}
+        {/* axes */}
+        <line x1={px(0)} y1={py(0)} x2={px(n)} y2={py(0)} stroke="#6b7280" strokeWidth="3.5" />
+        <line x1={px(0)} y1={py(0)} x2={px(0)} y2={py(n)} stroke="#6b7280" strokeWidth="3.5" />
+        {Array.from({ length: n + 1 }, (_, i) => (
+          <g key={`l${i}`}>
+            <text x={px(i)} y={py(0) + 17} fontSize="11" fontWeight="800" fill="#9ca3af" textAnchor="middle">
+              {i}
+            </text>
+            {i > 0 && (
+              <text x={px(0) - 8} y={py(i) + 4} fontSize="11" fontWeight="800" fill="#9ca3af" textAnchor="end">
+                {i}
+              </text>
+            )}
+          </g>
+        ))}
+        {viz.points.map((pt, i) => (
+          <g key={i}>
+            {/* dotted walk: across, then up */}
+            <line x1={px(0)} y1={py(0)} x2={px(pt.x)} y2={py(0)} stroke={color} strokeWidth="3" strokeDasharray="5 4" />
+            <line x1={px(pt.x)} y1={py(0)} x2={px(pt.x)} y2={py(pt.y)} stroke={color} strokeWidth="3" strokeDasharray="5 4" />
+            <circle cx={px(pt.x)} cy={py(pt.y)} r="8" fill={color} stroke="#fff" strokeWidth="3" />
+            <text x={px(pt.x) + 11} y={py(pt.y) - 8} fontSize="13" fontWeight="900" fill={color}>
+              {pt.label ?? `(${pt.x}, ${pt.y})`}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div className="font-black text-sm" style={{ color }}>
+        across first, then up ↗
+      </div>
+    </Box>
+  );
+}
+
+/* -------- a box of unit cubes, for volume -------- */
+function SolidViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "solid" }>; color: string; soft: string }) {
+  const s = 17;
+  const dx = 9;
+  const dy = -7;
+  const W = viz.w * s + viz.d * dx + 24;
+  const H = viz.h * s + viz.d * Math.abs(dy) + 26;
+  const cells: { x: number; y: number; z: number }[] = [];
+  for (let z = viz.d - 1; z >= 0; z--)
+    for (let y = 0; y < viz.h; y++) for (let x = 0; x < viz.w; x++) cells.push({ x, y, z });
+  return (
+    <Box>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        {cells.map((c, i) => {
+          const px = 12 + c.x * s + c.z * dx;
+          const py = H - 14 - (c.y + 1) * s + c.z * dy;
+          return (
+            <rect
+              key={i}
+              x={px}
+              y={py}
+              width={s}
+              height={s}
+              fill={c.z === 0 ? color : soft}
+              stroke={color}
+              strokeWidth="1.6"
+              rx="2.5"
+              opacity={c.z === 0 ? 1 : 0.85}
+            />
+          );
+        })}
+      </svg>
+      <div className="text-2xl font-black" style={{ color }}>
+        {viz.w} × {viz.h} × {viz.d} = {viz.w * viz.h * viz.d} cubes
+      </div>
+    </Box>
+  );
+}
+
+/* -------- circle: radius, diameter, circumference -------- */
+function CircleViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "circle" }>; color: string; soft: string }) {
+  const R = 62;
+  const c = 78;
+  return (
+    <Box>
+      <svg width="170" height="160" viewBox="0 0 170 160">
+        <circle cx={c + 6} cy={c} r={R} fill={soft} stroke={color} strokeWidth={viz.show === "circumference" ? 7 : 4} />
+        <circle cx={c + 6} cy={c} r="5" fill={color} />
+        {viz.show === "radius" && (
+          <>
+            <line x1={c + 6} y1={c} x2={c + 6 + R} y2={c} stroke={color} strokeWidth="6" strokeLinecap="round" />
+            <text x={c + 22} y={c - 9} fontSize="15" fontWeight="900" fill={color}>
+              r = {viz.r}
+            </text>
+          </>
+        )}
+        {viz.show === "diameter" && (
+          <>
+            <line x1={c + 6 - R} y1={c} x2={c + 6 + R} y2={c} stroke={color} strokeWidth="6" strokeLinecap="round" />
+            <text x={c - 20} y={c - 9} fontSize="15" fontWeight="900" fill={color}>
+              d = {viz.r * 2}
+            </text>
+          </>
+        )}
+      </svg>
+      <div className="font-black text-lg" style={{ color }}>
+        {viz.show === "radius"
+          ? `radius ${viz.r} — centre to edge`
+          : viz.show === "diameter"
+          ? `diameter ${viz.r * 2} — all the way across`
+          : "circumference — all the way around"}
+      </div>
+    </Box>
+  );
+}
+
+/* -------- hundred grid for decimals and percents -------- */
+function DecGridViz({ viz, color, soft }: { viz: Extract<Viz, { kind: "decgrid" }>; color: string; soft: string }) {
+  return (
+    <Box>
+      <div className="grid grid-cols-10 gap-[2px] p-1.5 rounded-xl" style={{ background: soft }}>
+        {Array.from({ length: 100 }, (_, i) => (
+          <div
+            key={i}
+            className="w-[17px] h-[17px] rounded-[3px]"
+            style={{ background: i < viz.shaded ? color : "#fff", border: `1.5px solid ${color}33` }}
+          />
+        ))}
+      </div>
+      <div className="text-2xl font-black" style={{ color }}>
+        {viz.label ?? `${viz.shaded} out of 100`}
+      </div>
+    </Box>
+  );
+}
+
+/* -------- a number line running through zero -------- */
+function NegLineViz({ viz, color }: { viz: Extract<Viz, { kind: "negline" }>; color: string }) {
+  const stops: number[] = [];
+  for (let v = viz.from; v <= viz.to; v++) stops.push(v);
+  return (
+    <Box>
+      <div className="w-full overflow-x-auto">
+        <div className="flex items-center justify-center gap-1 px-2 min-w-min">
+          {stops.map((v) => {
+            const isMark = v === viz.mark;
+            const isZero = v === 0;
+            return (
+              <div
+                key={v}
+                className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center text-[13px] font-black"
+                style={{
+                  background: isMark ? color : isZero ? "#374151" : "#fff",
+                  color: isMark || isZero ? "#fff" : v < 0 ? "#ef4444" : color,
+                  border: `3px solid ${isZero ? "#374151" : v < 0 ? "#fca5a5" : color}`,
+                }}
+              >
+                {v}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="font-black text-sm" style={{ color }}>
+        ← colder / smaller · warmer / bigger →
       </div>
     </Box>
   );

@@ -29,7 +29,20 @@ export type Viz =
   /** a clock face */
   | { kind: "clock"; h: number; m: number }
   /** big expression, optionally with one part highlighted */
-  | { kind: "expr"; parts: { text: string; hot?: boolean }[] };
+  | { kind: "expr"; parts: { text: string; hot?: boolean }[] }
+  /* ---- the higher course books ---- */
+  /** a measured angle, drawn to scale */
+  | { kind: "angle"; deg: number; label?: string }
+  /** a coordinate grid with plotted points */
+  | { kind: "coord"; size?: number; points: { x: number; y: number; label?: string }[] }
+  /** a box of unit cubes, for volume */
+  | { kind: "solid"; w: number; h: number; d: number }
+  /** a circle with radius / diameter / circumference called out */
+  | { kind: "circle"; r: number; show: "radius" | "diameter" | "circumference" }
+  /** a 10x10 hundred grid, for decimals and percents */
+  | { kind: "decgrid"; shaded: number; label?: string }
+  /** a number line that runs through zero into the negatives */
+  | { kind: "negline"; from: number; to: number; mark?: number };
 
 /** One step of a worked example: a picture plus a short line of narration. */
 export interface WorkStep {

@@ -5,6 +5,7 @@ import CoachCharacter from "../components/CoachCharacter";
 import { KidBg } from "../components/Ui";
 import { buddyVoice } from "../lib/buddy";
 import { coachFor } from "../lib/coaches";
+import { COURSE_LESSONS, bookById } from "../lib/content/course/lessons";
 import { SUBJECTS, subjectById } from "../lib/content";
 import { dueReviews, nextUnit, todaysPlan, totalDueReviews } from "../lib/engine";
 import { pick, todayISO } from "../lib/rand";
@@ -144,6 +145,7 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
             const next = nextUnit(kid, s.id);
             const inPlan = plan.includes(s.id);
             const due = dueReviews(kid, s.id).length;
+            const courseLine = courseSummary(kid);
             const lvl = s.levels[prog.level - 1];
             return (
               <div key={s.id} className="card p-4 relative overflow-hidden" style={{ borderTop: `8px solid ${s.color}` }}>
@@ -169,6 +171,26 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
                       ? `Next: ${next.unit.emoji} ${next.unit.title}`
                       : "🏆 Top level mastered!"}
                 </div>
+
+                {/* the course-book track lives alongside the speed missions */}
+                {s.id === "math" && (
+                  <button
+                    onClick={() => go({ name: "course", kidId: kid.id })}
+                    className="w-full mt-2 rounded-2xl p-3 btn-soft flex items-center gap-2.5 text-left"
+                    style={{ background: s.soft, border: `3px solid ${s.color}33` }}
+                  >
+                    <span className="text-2xl shrink-0">📘</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-black text-[15px] text-gray-800 leading-tight">
+                        {courseLine.title}
+                      </span>
+                      <span className="block text-[12px] font-bold" style={{ color: s.color }}>
+                        {courseLine.sub}
+                      </span>
+                    </span>
+                    <span className="font-black text-lg shrink-0" style={{ color: s.color }}>›</span>
+                  </button>
+                )}
                 <div className="flex gap-2 mt-3">
                   {!prog.placed ? (
                     <button
@@ -228,4 +250,18 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
       </div>
     </KidBg>
   );
+}
+
+/** One line describing where the kid is in the course-book track. */
+function courseSummary(kid: Kid): { title: string; sub: string } {
+  const c = kid.course;
+  if (!c) return { title: "Course Book", sub: "Start Math 1, lesson by lesson" };
+  const book = bookById(c.book);
+  const total = COURSE_LESSONS[c.book].length;
+  const done = c.done.filter((k) => k.startsWith(`${c.book}:`)).length;
+  const lesson = COURSE_LESSONS[c.book].find((l) => l.n === c.lesson);
+  return {
+    title: `${book.title} · Lesson ${Math.min(c.lesson, total)}`,
+    sub: lesson ? `${lesson.title} · ${done}/${total} done` : `${done}/${total} done`,
+  };
 }
