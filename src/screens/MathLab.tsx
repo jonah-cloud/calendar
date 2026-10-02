@@ -5,6 +5,7 @@ import { KidBg } from "../components/Ui";
 import { MONEY_LEVELS } from "../components/labs/MoneyLab";
 import { TALLY_LEVELS } from "../components/labs/TallyLab";
 import { MEASURE_LEVELS } from "../components/labs/MeasureLab";
+import { TIME_LEVELS } from "../components/labs/TimeLab";
 import type { Kid } from "../lib/types";
 
 /**
@@ -30,6 +31,15 @@ const LABS = [
     soft: "#f5f3ff",
     blurb: "Counting in bundles of five",
     levels: TALLY_LEVELS,
+  },
+  {
+    id: "time" as const,
+    title: "Clocks & Calendar",
+    emoji: "🕐",
+    color: "#0284c7",
+    soft: "#f0f9ff",
+    blurb: "Telling time, and how days, weeks and years fit together",
+    levels: TIME_LEVELS,
   },
   {
     id: "measure" as const,
