@@ -12,6 +12,8 @@ import GuideDashboard from "./screens/GuideDashboard";
 import BuddyBuilder from "./screens/BuddyBuilder";
 import LessonMap from "./screens/LessonMap";
 import CourseLessonScreen from "./screens/CourseLessonScreen";
+import ReadingScreen from "./screens/ReadingScreen";
+import SpellingScreen from "./screens/SpellingScreen";
 
 export type View =
   | { name: "picker" }
@@ -19,6 +21,8 @@ export type View =
   | { name: "session"; kidId: string; subject: SubjectId; mode: "learn" | "review" | "placement" }
   | { name: "map"; kidId: string; subject: SubjectId }
   | { name: "course"; kidId: string }
+  | { name: "reading"; kidId: string }
+  | { name: "spelling"; kidId: string }
   | { name: "courseLesson"; kidId: string; book: CourseBookId; lesson: number }
   | { name: "store"; kidId: string }
   | { name: "workshops"; kidId: string }
@@ -49,6 +53,10 @@ export default function App() {
       return <MasteryMap kid={kid!} subject={view.subject} go={setView} />;
     case "course":
       return <LessonMap kid={kid!} go={setView} />;
+    case "reading":
+      return <ReadingScreen kid={kid!} go={setView} />;
+    case "spelling":
+      return <SpellingScreen kid={kid!} go={setView} />;
     case "courseLesson":
       return <CourseLessonScreen kid={kid!} book={view.book} lesson={view.lesson} go={setView} />;
     case "store":

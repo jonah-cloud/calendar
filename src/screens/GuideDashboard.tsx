@@ -5,13 +5,15 @@ import { WORKSHOPS } from "../lib/content/workshops";
 import { accuracyLastNDays, subjectCompletion } from "../lib/engine";
 import { todayISO, uid } from "../lib/rand";
 import { getPreferredVoice, listVoices, setPreferredVoice, speak } from "../lib/speech";
-import { useStore } from "../lib/store";
+import { READS_PER_DAY, useStore } from "../lib/store";
+import { TOTAL_STORIES, storyByNumber } from "../lib/content/fluency";
+import { PASSES_NEEDED, TOTAL_LISTS, listByNumber } from "../lib/content/spelling/lists";
 
 export default function GuideDashboard({ go }: { go: (v: View) => void }) {
   const { state, dispatch } = useStore();
   const [unlocked, setUnlocked] = useState(!state.settings.pin);
   const [pinInput, setPinInput] = useState("");
-  const [tab, setTab] = useState<"progress" | "approvals" | "rewards" | "voices" | "settings" | "playbook">("progress");
+  const [tab, setTab] = useState<"progress" | "literacy" | "approvals" | "rewards" | "voices" | "settings" | "playbook">("progress");
   const today = todayISO();
 
   if (!unlocked) {
@@ -68,6 +70,7 @@ export default function GuideDashboard({ go }: { go: (v: View) => void }) {
           {(
             [
               ["progress", "📊 Progress"],
+              ["literacy", "📖 Reading & Spelling"],
               ["approvals", `✅ Approvals${pendingCount ? ` (${pendingCount})` : ""}`],
               ["rewards", "🎁 Rewards"],
               ["voices", "🔊 Voices"],
@@ -149,6 +152,8 @@ export default function GuideDashboard({ go }: { go: (v: View) => void }) {
         )}
 
         {/* APPROVALS */}
+        {tab === "literacy" && <LiteracyPanel />}
+
         {tab === "approvals" && (
           <div className="mt-5 space-y-4">
             {pendingCount === 0 && (
@@ -538,6 +543,178 @@ function Playbook() {
         Honest note from families who've tried it: the apps alone aren't magic — the daily
         structure, the sibling energy, and a cheering guide are what make it work. That's you. 💪
       </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Parent view of the two literacy tracks.
+ *
+ * For reading, the number that matters is words per minute on the THIRD
+ * read of a story — that is the fluency measure, and watching it climb
+ * across stories is the signal that repeated reading is working.
+ * For spelling, it's which weeks are passed and which words keep coming back.
+ * ------------------------------------------------------------------ */
+function LiteracyPanel() {
+  const { state } = useStore();
+  const today = todayISO();
+
+  return (
+    <div className="mt-5 space-y-5">
+      {state.kids.map((kid) => {
+        const f = kid.fluency;
+        const sp = kid.spelling;
+        const story = f ? storyByNumber(Math.min(f.story, TOTAL_STORIES)) : undefined;
+        const todays = (f?.days[today] ?? []).filter((a) => a.story === f?.story);
+
+        // last 10 days of reading, newest first
+        const recentDays = Object.entries(f?.days ?? {})
+          .sort((a, b) => b[0].localeCompare(a[0]))
+          .slice(0, 10);
+
+        // words missed most often in spelling
+        const missCount: Record<string, number> = {};
+        for (const run of sp?.history ?? []) for (const w of run.missed) missCount[w] = (missCount[w] ?? 0) + 1;
+        const stickyWords = Object.entries(missCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+        return (
+          <div key={kid.id} className="card p-5">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{kid.emoji}</span>
+              <h3 className="font-extrabold text-xl text-gray-800">{kid.name}</h3>
+            </div>
+
+            {/* ---------- reading ---------- */}
+            <div className="mt-4 rounded-2xl p-4" style={{ background: "#f0fdfa" }}>
+              <div className="font-black text-sm uppercase tracking-wide text-teal-700">📖 Daily reading</div>
+              {!f ? (
+                <p className="text-sm font-bold text-gray-500 mt-1">Hasn't started yet.</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    <Stat label="On story" value={`${Math.min(f.story, TOTAL_STORIES)}/${TOTAL_STORIES}`} />
+                    <Stat label="Stories done" value={String(f.done.length)} />
+                    <Stat label="Best speed" value={f.bestWpm ? `${Math.round(f.bestWpm)} wpm` : "—"} />
+                  </div>
+                  <div className="text-sm font-bold text-gray-600 mt-3">
+                    Current: <b>{story?.title}</b> — {story?.focusLabel}
+                    <br />
+                    Today: {todays.length}/{READS_PER_DAY} reads
+                    {todays.length > 0 && ` (${todays.map((a) => (a.ms / 1000).toFixed(1) + "s").join(" → ")})`}
+                  </div>
+
+                  {recentDays.length > 0 && (
+                    <table className="w-full text-sm mt-3">
+                      <thead>
+                        <tr className="text-left text-gray-400 font-black text-xs uppercase">
+                          <th className="py-1">Day</th>
+                          <th>Reads</th>
+                          <th>Times</th>
+                          <th>Gain</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentDays.map(([date, attempts]) => {
+                          const times = attempts.map((a) => a.ms);
+                          const gain = times.length > 1 ? times[0] - times[times.length - 1] : 0;
+                          return (
+                            <tr key={date} className="border-t border-gray-100">
+                              <td className="py-1.5 font-bold text-gray-600">{date.slice(5)}</td>
+                              <td className="font-bold text-gray-600">{attempts.length}</td>
+                              <td className="font-bold text-gray-500 tabular-nums">
+                                {times.map((t) => (t / 1000).toFixed(1)).join(" · ")}
+                              </td>
+                              <td className={`font-black tabular-nums ${gain > 0 ? "text-green-600" : "text-gray-400"}`}>
+                                {gain > 0 ? `−${(gain / 1000).toFixed(1)}s` : "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* ---------- spelling ---------- */}
+            <div className="mt-4 rounded-2xl p-4" style={{ background: "#f5f3ff" }}>
+              <div className="font-black text-sm uppercase tracking-wide text-violet-700">✏️ Spelling</div>
+              {!sp ? (
+                <p className="text-sm font-bold text-gray-500 mt-1">Hasn't started yet.</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    <Stat label="On week" value={`${Math.min(sp.list, TOTAL_LISTS)}/${TOTAL_LISTS}`} />
+                    <Stat label="Weeks passed" value={String(sp.passed.length)} />
+                    <Stat
+                      label="This week"
+                      value={`${sp.passes[sp.list] ?? 0}/${PASSES_NEEDED} ⭐`}
+                    />
+                  </div>
+                  <div className="text-sm font-bold text-gray-600 mt-3">
+                    Current list: <b>{listByNumber(Math.min(sp.list, TOTAL_LISTS))?.title}</b>
+                  </div>
+
+                  {stickyWords.length > 0 && (
+                    <div className="mt-3">
+                      <div className="font-black text-xs uppercase tracking-wide text-gray-400">
+                        words to work on
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-1.5">
+                        {stickyWords.map(([w, c]) => (
+                          <span
+                            key={w}
+                            className="rounded-xl px-2.5 py-1 font-bold text-sm bg-white border-2 border-red-200 text-red-600"
+                          >
+                            {w} <span className="text-red-400">×{c}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {sp.history.length > 0 && (
+                    <table className="w-full text-sm mt-3">
+                      <thead>
+                        <tr className="text-left text-gray-400 font-black text-xs uppercase">
+                          <th className="py-1">Day</th>
+                          <th>Week</th>
+                          <th>Score</th>
+                          <th>Run</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sp.history.slice(0, 10).map((run, i) => (
+                          <tr key={i} className="border-t border-gray-100">
+                            <td className="py-1.5 font-bold text-gray-600">{run.date.slice(5)}</td>
+                            <td className="font-bold text-gray-600">{run.list}</td>
+                            <td className="font-bold text-gray-600">
+                              {run.correct}/{run.total}
+                            </td>
+                            <td className="font-black">
+                              {run.perfect ? <span className="text-amber-500">⭐ perfect</span> : <span className="text-gray-400">—</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-white p-3 text-center">
+      <div className="text-[11px] font-black uppercase tracking-wide text-gray-400">{label}</div>
+      <div className="font-black text-xl text-gray-800">{value}</div>
     </div>
   );
 }

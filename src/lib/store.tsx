@@ -1,5 +1,19 @@
 import React, { createContext, useContext, useEffect, useReducer } from "react";
-import type { AppState, CourseBookId, Kid, Redemption, Reward, RoundResult, SubjectId } from "./types";
+import type {
+  AppState,
+  CourseBookId,
+  FluencyProgress,
+  Kid,
+  Redemption,
+  Reward,
+  RoundResult,
+  SpellingProgress,
+  SubjectId,
+} from "./types";
+import { PASSES_NEEDED } from "./content/spelling/lists";
+
+/** three timed reads of the same story per day — that is the fluency routine */
+export const READS_PER_DAY = 3;
 import { migrateBuddy } from "./buddy";
 import { SUBJECTS } from "./content";
 import { addDays, todayISO, uid } from "./rand";
@@ -89,6 +103,10 @@ export type Action =
   | { type: "COURSE_PLACE"; kidId: string; book: CourseBookId; lesson: number }
   | { type: "COURSE_GOTO"; kidId: string; book: CourseBookId; lesson: number }
   | { type: "COURSE_LESSON_DONE"; kidId: string; book: CourseBookId; lesson: number }
+  | { type: "FLUENCY_READ"; kidId: string; story: number; ms: number; words: number }
+  | { type: "FLUENCY_GOTO"; kidId: string; story: number }
+  | { type: "SPELLING_RUN"; kidId: string; list: number; correct: number; total: number; missed: string[] }
+  | { type: "SPELLING_GOTO"; kidId: string; list: number }
   | {
       type: "ROUND_DONE";
       kidId: string;
@@ -210,6 +228,59 @@ function reducer(state: AppState, action: Action): AppState {
           },
         };
       });
+    case "FLUENCY_READ":
+      return updateKid(state, action.kidId, (k) => {
+        const today = todayISO();
+        const f: FluencyProgress = k.fluency ?? { story: 1, days: {}, done: [], bestWpm: 0 };
+        const wpm = action.ms > 0 ? Math.round((action.words / (action.ms / 60000)) * 10) / 10 : 0;
+        const todays = [...(f.days[today] ?? []), { story: action.story, ms: action.ms, wpm, at: new Date().toISOString() }];
+        // three reads of the SAME story finishes it and unlocks the next one
+        const readsOfThis = todays.filter((a) => a.story === action.story).length;
+        const finished = readsOfThis >= READS_PER_DAY;
+        const done = finished && !f.done.includes(action.story) ? [...f.done, action.story] : f.done;
+        return {
+          ...k,
+          fluency: {
+            // only move forward — re-reading an old story must not pull them back
+            story: finished && action.story >= f.story ? action.story + 1 : f.story,
+            days: { ...f.days, [today]: todays },
+            done,
+            bestWpm: Math.max(f.bestWpm, wpm),
+          },
+        };
+      });
+    case "FLUENCY_GOTO":
+      return updateKid(state, action.kidId, (k) => ({
+        ...k,
+        fluency: { ...(k.fluency ?? { days: {}, done: [], bestWpm: 0 }), story: action.story } as FluencyProgress,
+      }));
+    case "SPELLING_RUN":
+      return updateKid(state, action.kidId, (k) => {
+        const sp: SpellingProgress = k.spelling ?? { list: 1, passes: {}, passed: [], history: [] };
+        const perfect = action.correct === action.total;
+        const prior = sp.passes[action.list] ?? 0;
+        const passes = perfect ? prior + 1 : prior;
+        const nowPassed = passes >= PASSES_NEEDED && !sp.passed.includes(action.list);
+        return {
+          ...k,
+          spelling: {
+            // a passed list unlocks the next week; replaying an old list cannot
+            // drag them backwards
+            list: nowPassed && action.list >= sp.list ? action.list + 1 : sp.list,
+            passes: { ...sp.passes, [action.list]: passes },
+            passed: nowPassed ? [...sp.passed, action.list] : sp.passed,
+            history: [
+              { date: todayISO(), list: action.list, correct: action.correct, total: action.total, perfect, missed: action.missed },
+              ...sp.history,
+            ].slice(0, 300),
+          },
+        };
+      });
+    case "SPELLING_GOTO":
+      return updateKid(state, action.kidId, (k) => ({
+        ...k,
+        spelling: { ...(k.spelling ?? { passes: {}, passed: [], history: [] }), list: action.list } as SpellingProgress,
+      }));
     case "ROUND_DONE": {
       return updateKid(state, action.kidId, (kid) => {
         const prog = kid.subjects[action.subject];

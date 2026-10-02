@@ -6,6 +6,9 @@ import { KidBg } from "../components/Ui";
 import { buddyVoice } from "../lib/buddy";
 import { coachFor } from "../lib/coaches";
 import { COURSE_LESSONS, bookById } from "../lib/content/course/lessons";
+import { TOTAL_STORIES, storyByNumber } from "../lib/content/fluency";
+import { PASSES_NEEDED, TOTAL_LISTS, listByNumber } from "../lib/content/spelling/lists";
+import { READS_PER_DAY } from "../lib/store";
 import { SUBJECTS, subjectById } from "../lib/content";
 import { dueReviews, nextUnit, todaysPlan, totalDueReviews } from "../lib/engine";
 import { pick, todayISO } from "../lib/rand";
@@ -146,6 +149,8 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
             const inPlan = plan.includes(s.id);
             const due = dueReviews(kid, s.id).length;
             const courseLine = courseSummary(kid);
+            const readLine = readingSummary(kid);
+            const spellLine = spellingSummary(kid);
             const lvl = s.levels[prog.level - 1];
             return (
               <div key={s.id} className="card p-4 relative overflow-hidden" style={{ borderTop: `8px solid ${s.color}` }}>
@@ -171,6 +176,42 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
                       ? `Next: ${next.unit.emoji} ${next.unit.title}`
                       : "🏆 Top level mastered!"}
                 </div>
+
+                {/* daily fluency + weekly spelling live on the reading card */}
+                {s.id === "reading" && (
+                  <div className="space-y-2 mt-2">
+                    <button
+                      onClick={() => go({ name: "reading", kidId: kid.id })}
+                      className="w-full rounded-2xl p-3 btn-soft flex items-center gap-2.5 text-left"
+                      style={{ background: s.soft, border: `3px solid ${s.color}33` }}
+                    >
+                      <span className="text-2xl shrink-0">📖</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-black text-[15px] text-gray-800 leading-tight">
+                          {readLine.title}
+                        </span>
+                        <span className="block text-[12px] font-bold" style={{ color: s.color }}>
+                          {readLine.sub}
+                        </span>
+                      </span>
+                      <span className="font-black text-lg shrink-0" style={{ color: s.color }}>›</span>
+                    </button>
+                    <button
+                      onClick={() => go({ name: "spelling", kidId: kid.id })}
+                      className="w-full rounded-2xl p-3 btn-soft flex items-center gap-2.5 text-left"
+                      style={{ background: "#f5f3ff", border: "3px solid #7c3aed33" }}
+                    >
+                      <span className="text-2xl shrink-0">✏️</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-black text-[15px] text-gray-800 leading-tight">
+                          {spellLine.title}
+                        </span>
+                        <span className="block text-[12px] font-bold text-violet-600">{spellLine.sub}</span>
+                      </span>
+                      <span className="font-black text-lg shrink-0 text-violet-600">›</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* the course-book track lives alongside the speed missions */}
                 {s.id === "math" && (
@@ -263,5 +304,31 @@ function courseSummary(kid: Kid): { title: string; sub: string } {
   return {
     title: `${book.title} · Lesson ${Math.min(c.lesson, total)}`,
     sub: lesson ? `${lesson.title} · ${done}/${total} done` : `${done}/${total} done`,
+  };
+}
+
+/** Where the kid is in the daily fluency routine, for the home card. */
+function readingSummary(kid: Kid): { title: string; sub: string } {
+  const f = kid.fluency;
+  if (!f) return { title: "Daily Reading", sub: `Story 1 of ${TOTAL_STORIES} · ${READS_PER_DAY} reads a day` };
+  const story = storyByNumber(Math.min(f.story, TOTAL_STORIES));
+  const reads = (f.days[todayISO()] ?? []).filter((a) => a.story === f.story).length;
+  const ticks = "●".repeat(reads) + "○".repeat(Math.max(0, READS_PER_DAY - reads));
+  return {
+    title: `Story ${Math.min(f.story, TOTAL_STORIES)} · ${story?.title ?? ""}`,
+    sub: reads >= READS_PER_DAY ? `${ticks} done for today! 🎉` : `${ticks} ${reads}/${READS_PER_DAY} reads today`,
+  };
+}
+
+/** Where the kid is in the spelling wall chart, for the home card. */
+function spellingSummary(kid: Kid): { title: string; sub: string } {
+  const sp = kid.spelling;
+  if (!sp) return { title: "Spelling", sub: `Week 1 of ${TOTAL_LISTS} · spell it right twice to pass` };
+  const list = listByNumber(Math.min(sp.list, TOTAL_LISTS));
+  const passes = sp.passes[sp.list] ?? 0;
+  const stars = "⭐".repeat(passes) + "☆".repeat(Math.max(0, PASSES_NEEDED - passes));
+  return {
+    title: `Week ${Math.min(sp.list, TOTAL_LISTS)} · ${list?.title ?? ""}`,
+    sub: `${stars}  ${sp.passed.length}/${TOTAL_LISTS} weeks passed`,
   };
 }

@@ -121,6 +121,55 @@ export interface CourseProgress {
   placed: boolean;
 }
 
+/* ---------- daily reading fluency ---------- */
+
+/** One timed read of one story. Three of these on a day finish that story. */
+export interface FluencyAttempt {
+  /** story number */
+  story: number;
+  /** how long the read took, in milliseconds */
+  ms: number;
+  /** words per minute for this read */
+  wpm: number;
+  /** ISO datetime */
+  at: string;
+}
+
+export interface FluencyProgress {
+  /** the story they are on (1-based) */
+  story: number;
+  /** attempts keyed by ISO date — the day's three reads live here */
+  days: Record<string, FluencyAttempt[]>;
+  /** stories finished (all three reads done) */
+  done: number[];
+  /** best (fastest) wpm ever recorded, for the parent view */
+  bestWpm: number;
+}
+
+/* ---------- weekly spelling ---------- */
+
+export interface SpellingRun {
+  date: string;
+  /** list number */
+  list: number;
+  correct: number;
+  total: number;
+  /** true when every word was spelled right */
+  perfect: boolean;
+  /** the words missed, so a parent can see what to work on */
+  missed: string[];
+}
+
+export interface SpellingProgress {
+  /** the list they are working on (1-based) */
+  list: number;
+  /** list number -> how many PERFECT runs so far (2 passes the list) */
+  passes: Record<number, number>;
+  /** lists fully passed */
+  passed: number[];
+  history: SpellingRun[];
+}
+
 export interface DayLog {
   blocks: number; // completed focus blocks today
   masteredBlocks: number; // blocks completed at >=90%
@@ -162,6 +211,10 @@ export interface Kid {
   subjects: Record<SubjectId, SubjectProgress>;
   /** course-book math track (optional: set after the placement check) */
   course?: CourseProgress;
+  /** daily reading fluency track */
+  fluency?: FluencyProgress;
+  /** weekly spelling lists */
+  spelling?: SpellingProgress;
   days: Record<string, DayLog>;
   redemptions: Redemption[];
   workshops: WorkshopDone[];
