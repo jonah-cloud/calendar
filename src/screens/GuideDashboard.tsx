@@ -6,7 +6,7 @@ import { accuracyLastNDays, subjectCompletion } from "../lib/engine";
 import { todayISO, uid } from "../lib/rand";
 import { getPreferredVoice, listVoices, setPreferredVoice, speak } from "../lib/speech";
 import { READS_PER_DAY, useStore } from "../lib/store";
-import { TOTAL_STORIES, storyByNumber } from "../lib/content/fluency";
+import { gradeDef, passageAt, wcpmTarget, weeksIn, type GradeId } from "../lib/content/fluency";
 import { PASSES_NEEDED, TOTAL_LISTS, listByNumber } from "../lib/content/spelling/lists";
 
 export default function GuideDashboard({ go }: { go: (v: View) => void }) {
@@ -564,8 +564,12 @@ function LiteracyPanel() {
       {state.kids.map((kid) => {
         const f = kid.fluency;
         const sp = kid.spelling;
-        const story = f ? storyByNumber(Math.min(f.story, TOTAL_STORIES)) : undefined;
-        const todays = (f?.days[today] ?? []).filter((a) => a.story === f?.story);
+        const fGrade = f?.grade as GradeId | undefined;
+        const fDef = fGrade ? gradeDef(fGrade) : undefined;
+        const fTotal = fGrade ? weeksIn(fGrade) : 0;
+        const passage = fGrade && f ? passageAt(fGrade, Math.min(f.week, fTotal)) : undefined;
+        const goal = fDef && f ? wcpmTarget(fDef, Math.min(f.week, fTotal)) : 0;
+        const todays = (f?.days[today] ?? []).filter((a) => a.grade === f?.grade && a.week === f?.week);
 
         // last 10 days of reading, newest first
         const recentDays = Object.entries(f?.days ?? {})
@@ -592,12 +596,29 @@ function LiteracyPanel() {
               ) : (
                 <>
                   <div className="grid grid-cols-3 gap-3 mt-3">
-                    <Stat label="On story" value={`${Math.min(f.story, TOTAL_STORIES)}/${TOTAL_STORIES}`} />
-                    <Stat label="Stories done" value={String(f.done.length)} />
-                    <Stat label="Best speed" value={f.bestWpm ? `${Math.round(f.bestWpm)} wpm` : "—"} />
+                    <Stat label="Reading at" value={fDef?.label ?? "—"} />
+                    <Stat label="Week" value={`${Math.min(f.week, fTotal)}/${fTotal}`} />
+                    <Stat
+                      label="Best speed"
+                      value={f.bestWcpm ? `${Math.round(f.bestWcpm)} wpm` : "—"}
+                    />
                   </div>
-                  <div className="text-sm font-bold text-gray-600 mt-3">
-                    Current: <b>{story?.title}</b> — {story?.focusLabel}
+                  <div
+                    className="text-sm font-black mt-3 rounded-xl px-3 py-2"
+                    style={{
+                      background: f.bestWcpm >= goal ? "#dcfce7" : "#fff7ed",
+                      color: f.bestWcpm >= goal ? "#15803d" : "#c2410c",
+                    }}
+                  >
+                    🎯 {fDef?.label} week {Math.min(f.week, fTotal)} goal: {goal} wpm ·{" "}
+                    {f.bestWcpm
+                      ? f.bestWcpm >= goal
+                        ? `best ${Math.round(f.bestWcpm)} wpm — at or above grade level`
+                        : `best ${Math.round(f.bestWcpm)} wpm — ${Math.max(0, Math.round(goal - f.bestWcpm))} to go`
+                      : "no timed reads yet"}
+                  </div>
+                  <div className="text-sm font-bold text-gray-600 mt-2">
+                    Current: <b>{passage?.skill}</b> — Unit {passage?.unit}, {passage?.unitTitle}
                     <br />
                     Today: {todays.length}/{READS_PER_DAY} reads
                     {todays.length > 0 && ` (${todays.map((a) => (a.ms / 1000).toFixed(1) + "s").join(" → ")})`}

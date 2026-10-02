@@ -1,6 +1,10 @@
 /**
  * Weekly spelling lists.
  *
+ * Weeks 1-20 are the family's own printed lists, transcribed from the
+ * Rainbow Writing worksheets, so the app matches the paper exactly. Weeks 21
+ * onward continue the progression into phonics patterns and word building.
+ *
  * A list is PASSED only after it has been spelled perfectly TWICE — one lucky
  * run isn't mastery. The lists are grouped into levels so the wall chart shows
  * a term's worth of weeks at a time, and the patterns build on each other in
@@ -30,7 +34,35 @@ export interface SpellingLevel {
 
 export const SPELLING_LEVELS: SpellingLevel[] = [
   {
-    title: "Level 1 · Sounds",
+    title: "Level 1 · Sight Words",
+    emoji: "⭐",
+    color: "#f59e0b",
+    soft: "#fffbeb",
+    rows: [
+      ["First Words", "the first words we read", ["a", "I", "am", "at", "is", "in", "it", "the", "and", "can"]],
+      ["More First Words", "words for me and you", ["see", "like", "my", "me", "we", "go", "up", "to", "you", "he"]],
+      ["Everyday Words", "words we use all day", ["she", "play", "on", "not", "do", "no", "so", "be", "big", "had"]],
+      ["Little Words", "short words that do a lot", ["has", "him", "his", "if", "did", "get", "for", "look", "little", "yes"]],
+      ["Words We Use", "words that show up everywhere", ["am", "are", "buy", "from", "had", "have", "her", "into", "love", "said"]],
+      ["Out and About", "words about going places", ["now", "our", "out", "ride", "says", "saw", "see", "so", "soon", "your"]],
+      ["Them and There", "words that point things out", ["that", "them", "then", "their", "there", "they're", "they", "are", "this", "too"]],
+      ["Question Words", "words that ask", ["up", "us", "very", "was", "we", "went", "what", "where", "why", "when"]],
+      ["Push and Pull", "action words", ["took", "tell", "pull", "push", "these", "those", "us", "use", "very", "wish"]],
+      ["Work Words", "words about doing things", ["work", "would", "write", "about", "along", "always", "any", "around", "been", "before"]],
+      ["Doing Words", "more action words", ["because", "bring", "carry", "clean", "cut", "carry", "down", "draw", "drink", "too"]],
+      ["Growing Words", "words about change", ["fall", "far", "full", "got", "grow", "hold", "hurt", "keep", "kind", "own"]],
+      ["Describing Words", "words that tell us more", ["laugh", "light", "long", "much", "myself", "never", "only", "pick", "small", "show"]],
+      ["Best and Worst", "comparing words", ["start", "today", "try", "best", "worst", "again", "clean", "sleep", "dance", "never"]],
+      ["Thinking Words", "words about ideas", ["animal", "bring", "also", "second", "from", "funny", "nothing", "round", "square", "quick"]],
+      ["Number Words", "the numbers, written out", ["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"]],
+      ["Color Words", "every color we know", ["orange", "yellow", "green", "blue", "purple", "pink", "teal", "indigo", "white", "black"]],
+      ["Days and Months", "the days of the week", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "January", "February", "March"]],
+      ["Months of the Year", "the rest of the months", ["April", "May", "June", "July", "August", "September", "October", "November", "December", "Month"]],
+      ["Our Earth", "words about our world", ["earth", "planet", "star", "globe", "country", "state", "river", "lake", "ocean", "field"]],
+    ],
+  },
+  {
+    title: "Level 2 · Sounds",
     emoji: "🌱",
     color: "#f97316",
     soft: "#fff7ed",
@@ -50,7 +82,7 @@ export const SPELLING_LEVELS: SpellingLevel[] = [
     ],
   },
   {
-    title: "Level 2 · Blends & Magic E",
+    title: "Level 3 · Blends & Magic E",
     emoji: "✨",
     color: "#8b5cf6",
     soft: "#f5f3ff",
@@ -66,11 +98,11 @@ export const SPELLING_LEVELS: SpellingLevel[] = [
       ["Magic E: o", "o with silent e", ["home", "hope", "note", "rose", "nose", "bone", "stone", "those", "broke", "close"]],
       ["Magic E: u", "u with silent e", ["cute", "huge", "June", "rule", "tube", "cube", "use", "mule", "tune", "flute"]],
       ["Magic E Mix", "silent e review", ["place", "brave", "shine", "drive", "smoke", "whole", "these", "stove", "grade", "slide"]],
-      ["Level 2 Review", "blends and magic e", ["stop", "black", "frog", "hand", "milk", "cake", "bike", "home", "cute", "shine"]],
+      ["Level 3 Review", "blends and magic e", ["stop", "black", "frog", "hand", "milk", "cake", "bike", "home", "cute", "shine"]],
     ],
   },
   {
-    title: "Level 3 · Vowel Teams",
+    title: "Level 4 · Vowel Teams",
     emoji: "👯",
     color: "#10b981",
     soft: "#ecfdf5",
@@ -86,11 +118,11 @@ export const SPELLING_LEVELS: SpellingLevel[] = [
       ["Bossy or", "or and ore", ["for", "corn", "born", "short", "storm", "more", "store", "score", "before", "shore"]],
       ["er, ir and ur", "three spellings, one sound", ["her", "over", "under", "water", "bird", "girl", "first", "shirt", "turn", "hurt"]],
       ["air, are and ear", "the /air/ and /ear/ sounds", ["air", "hair", "chair", "pair", "care", "share", "year", "hear", "near", "clear"]],
-      ["Level 3 Review", "vowel teams and bossy r", ["rain", "green", "beach", "boat", "night", "moon", "blue", "star", "store", "girl"]],
+      ["Level 4 Review", "vowel teams and bossy r", ["rain", "green", "beach", "boat", "night", "moon", "blue", "star", "store", "girl"]],
     ],
   },
   {
-    title: "Level 4 · Tricky Spellings",
+    title: "Level 5 · Tricky Spellings",
     emoji: "🌀",
     color: "#a855f7",
     soft: "#faf5ff",
@@ -106,11 +138,11 @@ export const SPELLING_LEVELS: SpellingLevel[] = [
       ["tch and dge", "after a short vowel", ["catch", "match", "watch", "pitch", "kitchen", "badge", "edge", "judge", "fudge", "hedge"]],
       ["Silent Letters", "kn, wr, gn and mb", ["know", "knee", "knife", "knock", "write", "wrong", "wrap", "sign", "comb", "thumb"]],
       ["ph and gh", "letters that say /f/", ["phone", "photo", "graph", "phrase", "laugh", "cough", "tough", "enough", "rough", "elephant"]],
-      ["Level 4 Review", "tricky spellings", ["house", "brown", "point", "because", "small", "happy", "nice", "change", "watch", "know"]],
+      ["Level 5 Review", "tricky spellings", ["house", "brown", "point", "because", "small", "happy", "nice", "change", "watch", "know"]],
     ],
   },
   {
-    title: "Level 5 · Word Building",
+    title: "Level 6 · Word Building",
     emoji: "🏔️",
     color: "#0891b2",
     soft: "#ecfeff",

@@ -123,27 +123,33 @@ export interface CourseProgress {
 
 /* ---------- daily reading fluency ---------- */
 
-/** One timed read of one story. Three of these on a day finish that story. */
+/** One timed read of one passage. Three of these on a day finish the passage. */
 export interface FluencyAttempt {
-  /** story number */
-  story: number;
+  /** which grade's passage, e.g. "1" */
+  grade: string;
+  /** week within that grade */
+  week: number;
   /** how long the read took, in milliseconds */
   ms: number;
-  /** words per minute for this read */
-  wpm: number;
+  /** words correct per minute for this read */
+  wcpm: number;
   /** ISO datetime */
   at: string;
 }
 
 export interface FluencyProgress {
-  /** the story they are on (1-based) */
-  story: number;
+  /** the grade they are reading at */
+  grade: string;
+  /** the week within that grade (1-based) */
+  week: number;
   /** attempts keyed by ISO date — the day's three reads live here */
   days: Record<string, FluencyAttempt[]>;
-  /** stories finished (all three reads done) */
-  done: number[];
-  /** best (fastest) wpm ever recorded, for the parent view */
-  bestWpm: number;
+  /** passages finished, as "1:14" grade:week keys */
+  done: string[];
+  /** best WCPM ever recorded, for the parent view */
+  bestWcpm: number;
+  /** has a grade been chosen yet */
+  placed: boolean;
 }
 
 /* ---------- weekly spelling ---------- */

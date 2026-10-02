@@ -6,7 +6,7 @@ import { KidBg } from "../components/Ui";
 import { buddyVoice } from "../lib/buddy";
 import { coachFor } from "../lib/coaches";
 import { COURSE_LESSONS, bookById } from "../lib/content/course/lessons";
-import { TOTAL_STORIES, storyByNumber } from "../lib/content/fluency";
+import { gradeDef, passageAt, weeksIn, type GradeId } from "../lib/content/fluency";
 import { PASSES_NEEDED, TOTAL_LISTS, listByNumber } from "../lib/content/spelling/lists";
 import { READS_PER_DAY } from "../lib/store";
 import { SUBJECTS, subjectById } from "../lib/content";
@@ -213,24 +213,40 @@ export default function KidHome({ kid, go }: { kid: Kid; go: (v: View) => void }
                   </div>
                 )}
 
-                {/* the course-book track lives alongside the speed missions */}
+                {/* the course book and the hands-on labs sit under the math card */}
                 {s.id === "math" && (
-                  <button
-                    onClick={() => go({ name: "course", kidId: kid.id })}
-                    className="w-full mt-2 rounded-2xl p-3 btn-soft flex items-center gap-2.5 text-left"
-                    style={{ background: s.soft, border: `3px solid ${s.color}33` }}
-                  >
-                    <span className="text-2xl shrink-0">📘</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-black text-[15px] text-gray-800 leading-tight">
-                        {courseLine.title}
+                  <div className="space-y-2 mt-2">
+                    <button
+                      onClick={() => go({ name: "course", kidId: kid.id })}
+                      className="w-full rounded-2xl p-3 btn-soft flex items-center gap-2.5 text-left"
+                      style={{ background: s.soft, border: `3px solid ${s.color}33` }}
+                    >
+                      <span className="text-2xl shrink-0">📘</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-black text-[15px] text-gray-800 leading-tight">
+                          {courseLine.title}
+                        </span>
+                        <span className="block text-[12px] font-bold" style={{ color: s.color }}>
+                          {courseLine.sub}
+                        </span>
                       </span>
-                      <span className="block text-[12px] font-bold" style={{ color: s.color }}>
-                        {courseLine.sub}
+                      <span className="font-black text-lg shrink-0" style={{ color: s.color }}>›</span>
+                    </button>
+                    <button
+                      onClick={() => go({ name: "mathlab", kidId: kid.id })}
+                      className="w-full rounded-2xl p-3 btn-soft flex items-center gap-2.5 text-left"
+                      style={{ background: "#eef2ff", border: "3px solid #6366f133" }}
+                    >
+                      <span className="text-2xl shrink-0">🧪</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-black text-[15px] text-gray-800 leading-tight">Math Labs</span>
+                        <span className="block text-[12px] font-bold text-indigo-600">
+                          Money · tally marks · measuring
+                        </span>
                       </span>
-                    </span>
-                    <span className="font-black text-lg shrink-0" style={{ color: s.color }}>›</span>
-                  </button>
+                      <span className="font-black text-lg shrink-0 text-indigo-600">›</span>
+                    </button>
+                  </div>
                 )}
                 <div className="flex gap-2 mt-3">
                   {!prog.placed ? (
@@ -310,13 +326,18 @@ function courseSummary(kid: Kid): { title: string; sub: string } {
 /** Where the kid is in the daily fluency routine, for the home card. */
 function readingSummary(kid: Kid): { title: string; sub: string } {
   const f = kid.fluency;
-  if (!f) return { title: "Daily Reading", sub: `Story 1 of ${TOTAL_STORIES} · ${READS_PER_DAY} reads a day` };
-  const story = storyByNumber(Math.min(f.story, TOTAL_STORIES));
-  const reads = (f.days[todayISO()] ?? []).filter((a) => a.story === f.story).length;
+  if (!f?.placed) return { title: "Daily Reading", sub: `Pick a grade · ${READS_PER_DAY} reads a day` };
+  const grade = f.grade as GradeId;
+  const def = gradeDef(grade);
+  const total = weeksIn(grade);
+  const p = passageAt(grade, Math.min(f.week, total));
+  const reads = (f.days[todayISO()] ?? []).filter((a) => a.grade === grade && a.week === f.week).length;
   const ticks = "●".repeat(reads) + "○".repeat(Math.max(0, READS_PER_DAY - reads));
   return {
-    title: `Story ${Math.min(f.story, TOTAL_STORIES)} · ${story?.title ?? ""}`,
-    sub: reads >= READS_PER_DAY ? `${ticks} done for today! 🎉` : `${ticks} ${reads}/${READS_PER_DAY} reads today`,
+    title: `${def.label} · Week ${Math.min(f.week, total)} of ${total}`,
+    sub: reads >= READS_PER_DAY
+      ? `${ticks} done for today! 🎉`
+      : `${ticks} ${p?.skill ?? ""} · ${reads}/${READS_PER_DAY} reads`,
   };
 }
 

@@ -103,8 +103,9 @@ export type Action =
   | { type: "COURSE_PLACE"; kidId: string; book: CourseBookId; lesson: number }
   | { type: "COURSE_GOTO"; kidId: string; book: CourseBookId; lesson: number }
   | { type: "COURSE_LESSON_DONE"; kidId: string; book: CourseBookId; lesson: number }
-  | { type: "FLUENCY_READ"; kidId: string; story: number; ms: number; words: number }
-  | { type: "FLUENCY_GOTO"; kidId: string; story: number }
+  | { type: "FLUENCY_READ"; kidId: string; grade: string; week: number; ms: number; words: number; lastWeek: boolean; nextGrade: string | null }
+  | { type: "FLUENCY_GOTO"; kidId: string; grade: string; week: number }
+  | { type: "FLUENCY_PLACE"; kidId: string; grade: string; week: number }
   | { type: "SPELLING_RUN"; kidId: string; list: number; correct: number; total: number; missed: string[] }
   | { type: "SPELLING_GOTO"; kidId: string; list: number }
   | {
@@ -231,28 +232,54 @@ function reducer(state: AppState, action: Action): AppState {
     case "FLUENCY_READ":
       return updateKid(state, action.kidId, (k) => {
         const today = todayISO();
-        const f: FluencyProgress = k.fluency ?? { story: 1, days: {}, done: [], bestWpm: 0 };
-        const wpm = action.ms > 0 ? Math.round((action.words / (action.ms / 60000)) * 10) / 10 : 0;
-        const todays = [...(f.days[today] ?? []), { story: action.story, ms: action.ms, wpm, at: new Date().toISOString() }];
-        // three reads of the SAME story finishes it and unlocks the next one
-        const readsOfThis = todays.filter((a) => a.story === action.story).length;
-        const finished = readsOfThis >= READS_PER_DAY;
-        const done = finished && !f.done.includes(action.story) ? [...f.done, action.story] : f.done;
+        const f: FluencyProgress =
+          k.fluency ?? { grade: action.grade, week: action.week, days: {}, done: [], bestWcpm: 0, placed: true };
+        const wcpm = action.ms > 0 ? Math.round((action.words / (action.ms / 60000)) * 10) / 10 : 0;
+        const todays = [
+          ...(f.days[today] ?? []),
+          { grade: action.grade, week: action.week, ms: action.ms, wcpm, at: new Date().toISOString() },
+        ];
+        const reads = todays.filter((a) => a.grade === action.grade && a.week === action.week).length;
+        const finished = reads >= READS_PER_DAY;
+        const key = `${action.grade}:${action.week}`;
+        const done = finished && !f.done.includes(key) ? [...f.done, key] : f.done;
+
+        // only move forward — re-reading an earlier passage must not pull them back
+        let grade = f.grade;
+        let week = f.week;
+        if (finished && action.grade === f.grade && action.week >= f.week) {
+          if (action.lastWeek && action.nextGrade) {
+            grade = action.nextGrade;
+            week = 1;
+          } else if (!action.lastWeek) {
+            week = action.week + 1;
+          }
+        }
         return {
           ...k,
-          fluency: {
-            // only move forward — re-reading an old story must not pull them back
-            story: finished && action.story >= f.story ? action.story + 1 : f.story,
-            days: { ...f.days, [today]: todays },
-            done,
-            bestWpm: Math.max(f.bestWpm, wpm),
-          },
+          fluency: { grade, week, days: { ...f.days, [today]: todays }, done, bestWcpm: Math.max(f.bestWcpm, wcpm), placed: true },
         };
       });
     case "FLUENCY_GOTO":
       return updateKid(state, action.kidId, (k) => ({
         ...k,
-        fluency: { ...(k.fluency ?? { days: {}, done: [], bestWpm: 0 }), story: action.story } as FluencyProgress,
+        fluency: {
+          ...(k.fluency ?? { days: {}, done: [], bestWcpm: 0, placed: true }),
+          grade: action.grade,
+          week: action.week,
+        } as FluencyProgress,
+      }));
+    case "FLUENCY_PLACE":
+      return updateKid(state, action.kidId, (k) => ({
+        ...k,
+        fluency: {
+          days: k.fluency?.days ?? {},
+          done: k.fluency?.done ?? [],
+          bestWcpm: k.fluency?.bestWcpm ?? 0,
+          grade: action.grade,
+          week: action.week,
+          placed: true,
+        },
       }));
     case "SPELLING_RUN":
       return updateKid(state, action.kidId, (k) => {

@@ -14,6 +14,7 @@ import LessonMap from "./screens/LessonMap";
 import CourseLessonScreen from "./screens/CourseLessonScreen";
 import ReadingScreen from "./screens/ReadingScreen";
 import SpellingScreen from "./screens/SpellingScreen";
+import MathLab from "./screens/MathLab";
 
 export type View =
   | { name: "picker" }
@@ -23,6 +24,7 @@ export type View =
   | { name: "course"; kidId: string }
   | { name: "reading"; kidId: string }
   | { name: "spelling"; kidId: string }
+  | { name: "mathlab"; kidId: string }
   | { name: "courseLesson"; kidId: string; book: CourseBookId; lesson: number }
   | { name: "store"; kidId: string }
   | { name: "workshops"; kidId: string }
@@ -57,6 +59,8 @@ export default function App() {
       return <ReadingScreen kid={kid!} go={setView} />;
     case "spelling":
       return <SpellingScreen kid={kid!} go={setView} />;
+    case "mathlab":
+      return <MathLab kid={kid!} go={setView} />;
     case "courseLesson":
       return <CourseLessonScreen kid={kid!} book={view.book} lesson={view.lesson} go={setView} />;
     case "store":
