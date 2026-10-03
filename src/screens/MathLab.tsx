@@ -6,6 +6,7 @@ import { MONEY_LEVELS } from "../components/labs/MoneyLab";
 import { TALLY_LEVELS } from "../components/labs/TallyLab";
 import { MEASURE_LEVELS } from "../components/labs/MeasureLab";
 import { TIME_LEVELS } from "../components/labs/TimeLab";
+import { HALF_HOUR_LEVELS } from "../components/labs/HalfHourLab";
 import { SHAPE_LEVELS } from "../components/labs/ShapeLab";
 import type { Kid } from "../lib/types";
 
@@ -34,12 +35,21 @@ const LABS = [
     levels: TALLY_LEVELS,
   },
   {
+    id: "halfhour" as const,
+    title: "O'Clock & Half Past",
+    emoji: "🕐",
+    color: "#f59e0b",
+    soft: "#fffbeb",
+    blurb: "Telling time to the hour and the half hour",
+    levels: HALF_HOUR_LEVELS,
+  },
+  {
     id: "time" as const,
     title: "Clocks & Calendar",
     emoji: "🕐",
     color: "#0284c7",
     soft: "#f0f9ff",
-    blurb: "Telling time, and how days, weeks and years fit together",
+    blurb: "Time to five minutes, plus days, weeks and years",
     levels: TIME_LEVELS,
   },
   {
