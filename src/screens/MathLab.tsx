@@ -6,6 +6,7 @@ import { MONEY_LEVELS } from "../components/labs/MoneyLab";
 import { TALLY_LEVELS } from "../components/labs/TallyLab";
 import { MEASURE_LEVELS } from "../components/labs/MeasureLab";
 import { TIME_LEVELS } from "../components/labs/TimeLab";
+import { SHAPE_LEVELS } from "../components/labs/ShapeLab";
 import type { Kid } from "../lib/types";
 
 /**
@@ -40,6 +41,15 @@ const LABS = [
     soft: "#f0f9ff",
     blurb: "Telling time, and how days, weeks and years fit together",
     levels: TIME_LEVELS,
+  },
+  {
+    id: "shapes" as const,
+    title: "Shapes & Fractions",
+    emoji: "🔷",
+    color: "#d946ef",
+    soft: "#fdf4ff",
+    blurb: "Naming shapes, then cutting them into equal parts",
+    levels: SHAPE_LEVELS,
   },
   {
     id: "measure" as const,
